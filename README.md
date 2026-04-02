@@ -32,7 +32,7 @@ Add to your `claude_desktop_config.json`:
 {
   "mcpServers": {
     "localpro": {
-      "url": "https://localpro-mcp.<your-subdomain>.workers.dev/mcp",
+      "url": "https://mcp.localpro.dev/mcp",
       "headers": {
         "X-API-Key": "your-api-key"
       }
@@ -49,7 +49,7 @@ Add to `.cursor/mcp.json`:
 {
   "mcpServers": {
     "localpro": {
-      "url": "https://localpro-mcp.<your-subdomain>.workers.dev/mcp",
+      "url": "https://mcp.localpro.dev/mcp",
       "headers": {
         "X-API-Key": "your-api-key"
       }
@@ -62,7 +62,7 @@ Add to `.cursor/mcp.json`:
 
 ```bash
 # Initialize session
-curl -X POST https://localpro-mcp.<your-subdomain>.workers.dev/mcp \
+curl -X POST https://mcp.localpro.dev/mcp \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
   -H "X-API-Key: your-api-key" \
