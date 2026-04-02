@@ -357,9 +357,36 @@ AI agents can self-discover this server via standard well-known endpoints:
 
 | Tier | Limit |
 |------|-------|
-| Standard | 10 requests/minute per IP |
+| Standard | 30 requests/minute per API key |
 
 Higher limits available for partners — contact will@laced.dev.
+
+## Data Coverage
+
+LocalPro serves verified provider data across 9 trade categories. Coverage and completeness vary by niche:
+
+| Category | Providers | States | Cities | Phone | Description | Services |
+|----------|-----------|--------|--------|-------|-------------|----------|
+| Foundation Repair | 1,656 | 27 | 638 | 99% | 69% | 65% |
+| Crawl Space Repair | 1,219 | 46 | 521 | 89% | 88% | 88% |
+| Septic Services | 1,165 | 46 | 592 | 98% | 88% | 78% |
+| Remediation | 1,158 | 21 | 475 | 100% | 88% | 87% |
+| Basement Waterproofing | 1,126 | 48 | 583 | 91% | 65% | 66% |
+| Floor Coating | 705 | 47 | 485 | 99% | 87% | 87% |
+| Laundry Services | 680 | 39 | 2,933 | 99% | 98% | 98% |
+| Commercial Electrical | 618 | 15 | 202 | 98% | 67% | 0%* |
+| Radon | 331 | 15 | 214 | 99% | 87% | 84% |
+
+*\*Commercial Electrical enrichment is in progress.*
+
+**What this means for agents:**
+- **Name, city, state** are 100% complete across all niches — every result has these fields.
+- **Phone** is 89–100% — the vast majority of providers have contact info on their listing page.
+- **Services and descriptions** vary — some niches are deeply enriched (88%+), others are being backfilled.
+- **Ratings** are being backfilled via Google Places. Coverage is growing weekly.
+- Fields that don't have data return explicit `null` — never omitted, never empty strings pretending to be values.
+
+Data is refreshed weekly. Coverage percentages improve with each enrichment cycle.
 
 ## Self-Hosting
 
