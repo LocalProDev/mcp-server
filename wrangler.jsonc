@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "localpro-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-03-10",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "laced-directory",
+      "database_id": "17dee093-ba5a-4b84-bd0b-e73dc0dc954f"
+    }
+  ]
+  // API_KEY is set via `wrangler secret put API_KEY` — not in config
+  // When API_KEY is not set, auth is disabled (local dev)
+}
