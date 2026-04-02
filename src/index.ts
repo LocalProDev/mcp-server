@@ -10,6 +10,7 @@ import { errorResponse } from './lib/response.js';
 interface Env {
   DB: D1Database;
   API_KEY?: string;
+  MCP_RATE_LIMITER?: RateLimit;
 }
 
 function createServer(db: D1Database): McpServer {
@@ -134,6 +135,18 @@ export default {
     // Authenticate /mcp requests
     const authError = authenticateRequest(request, env);
     if (authError) return authError;
+
+    // Rate limiting (by API key or IP)
+    if (env.MCP_RATE_LIMITER) {
+      const rateLimitKey = request.headers.get('X-API-Key') || request.headers.get('CF-Connecting-IP') || 'anonymous';
+      const { success } = await env.MCP_RATE_LIMITER.limit({ key: rateLimitKey });
+      if (!success) {
+        return new Response(
+          JSON.stringify({ error: { code: 'RATE_LIMITED', message: 'Rate limit exceeded. Max 30 requests per minute.' } }),
+          { status: 429, headers: { 'content-type': 'application/json', 'retry-after': '60' } },
+        );
+      }
+    }
 
     // MCP handler
     const server = createServer(env.DB);
