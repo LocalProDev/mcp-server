@@ -100,6 +100,8 @@ export function registerSearchProviders(server: McpServer, db: D1Database) {
 
         const providers = results.map((r) => {
           const rawServices = parseJsonArray(r.enriched_services);
+          const pricingArr = parseJsonArray(r.enriched_pricing);
+          const certsArr = parseJsonArray(r.enriched_certifications);
           return {
             name: r.provider_name,
             description: r.description ?? null,
@@ -111,8 +113,7 @@ export function registerSearchProviders(server: McpServer, db: D1Database) {
               type: s,
               label: getServiceLabel(r.niche_id, s),
             })),
-            pricing: parseJsonArray(r.enriched_pricing),
-            certifications: parseJsonArray(r.enriched_certifications),
+            pricing_summary: pricingArr.length > 0 ? pricingArr[0] : null,
             coverage_area: r.enriched_coverage ?? null,
             years_in_business: r.enriched_years ?? null,
             listing_url: buildListingUrl(
@@ -120,6 +121,7 @@ export function registerSearchProviders(server: McpServer, db: D1Database) {
               r.metro_area || r.city_slug,
               r.provider_slug,
             ),
+            premium_available: pricingArr.length > 1 || certsArr.length > 0,
           };
         });
 

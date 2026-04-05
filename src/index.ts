@@ -13,7 +13,7 @@ interface Env {
   MCP_RATE_LIMITER?: RateLimit;
 }
 
-function createServer(db: D1Database): McpServer {
+function createServer(db: D1Database, authenticated: boolean): McpServer {
   const server = new McpServer({
     name: 'LocalPro',
     version: '1.0.0',
@@ -23,7 +23,7 @@ function createServer(db: D1Database): McpServer {
   registerListCities(server, db);
   registerListServiceTypes(server, db);
   registerSearchProviders(server, db);
-  registerGetProvider(server, db);
+  registerGetProvider(server, db, authenticated);
 
   return server;
 }
@@ -101,42 +101,24 @@ function handleWellKnown(request: Request): Response | null {
 }
 
 // ---- API Key Authentication ----
+// Search/list tools are public. get_provider gates premium fields (certs, full pricing)
+// based on whether the caller provided a valid API key.
 
-function authenticateRequest(request: Request, env: Env): Response | null {
-  // No API_KEY configured = auth disabled (dev/staging)
-  if (!env.API_KEY) return null;
-
+function isAuthenticated(request: Request, env: Env): boolean {
+  if (!env.API_KEY) return true; // No key configured = all access (dev)
   const providedKey = request.headers.get('X-API-Key');
-  if (!providedKey) {
-    return new Response(
-      JSON.stringify({ error: { code: 'UNAUTHORIZED', message: 'Missing X-API-Key header. See /.well-known/mcp.json for details.' } }),
-      { status: 401, headers: { 'content-type': 'application/json' } },
-    );
-  }
-
-  if (providedKey !== env.API_KEY) {
-    return new Response(
-      JSON.stringify({ error: { code: 'FORBIDDEN', message: 'Invalid API key.' } }),
-      { status: 403, headers: { 'content-type': 'application/json' } },
-    );
-  }
-
-  return null; // Auth passed
+  return providedKey === env.API_KEY;
 }
 
 // ---- Worker entry point ----
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    // Well-known endpoints are public (no auth required)
+    // Well-known endpoints are public
     const wellKnown = handleWellKnown(request);
     if (wellKnown) return wellKnown;
 
-    // Authenticate /mcp requests
-    const authError = authenticateRequest(request, env);
-    if (authError) return authError;
-
-    // Rate limiting (by API key or IP)
+    // Rate limiting (by API key or IP — applies to all requests)
     if (env.MCP_RATE_LIMITER) {
       const rateLimitKey = request.headers.get('X-API-Key') || request.headers.get('CF-Connecting-IP') || 'anonymous';
       const { success } = await env.MCP_RATE_LIMITER.limit({ key: rateLimitKey });
@@ -148,8 +130,11 @@ export default {
       }
     }
 
+    // Check auth — list/search tools are public, get_provider gates premium fields
+    const authenticated = isAuthenticated(request, env);
+
     // MCP handler
-    const server = createServer(env.DB);
+    const server = createServer(env.DB, authenticated);
     return createMcpHandler(server)(request, env, ctx);
   },
 } satisfies ExportedHandler<Env>;

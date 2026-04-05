@@ -37,10 +37,10 @@ interface ServiceRow {
   turnaround: string | null;
 }
 
-export function registerGetProvider(server: McpServer, db: D1Database) {
+export function registerGetProvider(server: McpServer, db: D1Database, authenticated: boolean) {
   server.tool(
     'get_provider',
-    'Get a detailed summary of a specific verified service provider. Returns business description, services offered with pricing, certifications, coverage area, and a link to the full profile page with contact details (phone, email, address). Use the provider_slug value from search_providers results. Does not return direct contact info — visit the listing_url for phone, email, and address.',
+    'Get a detailed summary of a specific verified service provider. Returns business description, services, pricing summary, coverage area, service details, and a link to the full profile page. With a valid API key (X-API-Key header): also returns full pricing breakdown and certifications. Without a key: returns pricing_summary and a premium_available flag. Contact details (phone, email, address) are available on the listing page via listing_url.',
     {
       niche_id: z.string().describe('Niche ID (e.g. "coated-local"). Must match the niche used in search_providers.'),
       provider_slug: z.string().describe('Provider URL slug from search_providers results (e.g. "abc-coatings")'),
@@ -99,6 +99,8 @@ export function registerGetProvider(server: McpServer, db: D1Database) {
           : '';
 
         const rawServices = parseJsonArray(provider.enriched_services);
+        const pricingArr = parseJsonArray(provider.enriched_pricing);
+        const certsArr = parseJsonArray(provider.enriched_certifications);
 
         const result = {
           name: provider.name,
@@ -110,8 +112,16 @@ export function registerGetProvider(server: McpServer, db: D1Database) {
             type: s,
             label: getServiceLabel(provider.niche_id, s),
           })),
-          pricing: parseJsonArray(provider.enriched_pricing),
-          certifications: parseJsonArray(provider.enriched_certifications),
+          // Authenticated: full pricing array + certifications
+          // Public: pricing summary only, certs omitted
+          ...(authenticated
+            ? {
+                pricing: pricingArr,
+                certifications: certsArr,
+              }
+            : {
+                pricing_summary: pricingArr.length > 0 ? pricingArr[0] : null,
+              }),
           coverage_area: provider.enriched_coverage ?? null,
           service_areas: locResult.results.map((l) => ({
             city: l.city_name,
@@ -133,6 +143,9 @@ export function registerGetProvider(server: McpServer, db: D1Database) {
           listing_url: citySlug
             ? buildListingUrl(provider.niche_domain, citySlug, provider.slug)
             : `https://${provider.niche_domain}/`,
+          ...(!authenticated && (pricingArr.length > 1 || certsArr.length > 0)
+            ? { premium_available: true }
+            : {}),
         };
 
         return {
