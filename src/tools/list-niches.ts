@@ -1,5 +1,5 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { wrapResponse, errorResponse } from '../lib/response.js';
+import { wrapResponse, errorResponse, nicheInClause, nicheBindValues } from '../lib/response.js';
 
 export function registerListNiches(server: McpServer, db: D1Database) {
   server.tool(
@@ -13,8 +13,10 @@ export function registerListNiches(server: McpServer, db: D1Database) {
             `SELECT n.id, n.name, n.slug, n.domain,
                     (SELECT COUNT(*) FROM providers p WHERE p.niche_id = n.id AND p.verified = 1) AS provider_count
              FROM niches n
+             WHERE n.id IN (${nicheInClause()})
              ORDER BY n.name`,
           )
+          .bind(...nicheBindValues())
           .all<{ id: string; name: string; slug: string; domain: string; provider_count: number }>();
 
         const niches = results.map((r) => ({

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { buildListingUrl, parseJsonArray, wrapResponse, errorResponse } from '../lib/response.js';
+import { buildListingUrl, parseJsonArray, wrapResponse, errorResponse, isNicheEnabled } from '../lib/response.js';
 import { getServiceLabel } from '../lib/service-labels.js';
 
 interface ProviderDetailRow {
@@ -46,6 +46,9 @@ export function registerGetProvider(server: McpServer, db: D1Database) {
       provider_slug: z.string().describe('Provider URL slug from search_providers results (e.g. "abc-coatings")'),
     },
     async ({ niche_id, provider_slug }) => {
+      if (!isNicheEnabled(niche_id)) {
+        return errorResponse('NOT_FOUND', `Niche "${niche_id}" is not available. Use list_niches to see available niches.`);
+      }
       try {
         const provider = await db
           .prepare(

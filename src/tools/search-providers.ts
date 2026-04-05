@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { buildListingUrl, parseJsonArray, wrapResponse, errorResponse } from '../lib/response.js';
+import { buildListingUrl, parseJsonArray, wrapResponse, errorResponse, isNicheEnabled } from '../lib/response.js';
 import { getServiceLabel } from '../lib/service-labels.js';
 
 interface ProviderRow {
@@ -34,6 +34,9 @@ export function registerSearchProviders(server: McpServer, db: D1Database) {
       limit: z.number().min(1).max(25).optional().describe('Max results to return (default 10)'),
     },
     async ({ niche_id, city, service_type, limit }) => {
+      if (!isNicheEnabled(niche_id)) {
+        return errorResponse('NOT_FOUND', `Niche "${niche_id}" is not available. Use list_niches to see available niches.`);
+      }
       try {
         const maxResults = limit ?? 10;
         const binds: (string | number)[] = [niche_id];

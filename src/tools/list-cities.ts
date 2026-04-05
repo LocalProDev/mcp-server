@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { wrapResponse, errorResponse } from '../lib/response.js';
+import { wrapResponse, errorResponse, isNicheEnabled } from '../lib/response.js';
 
 export function registerListCities(server: McpServer, db: D1Database) {
   server.tool(
@@ -11,6 +11,9 @@ export function registerListCities(server: McpServer, db: D1Database) {
       state: z.string().length(2).optional().describe('Two-letter state abbreviation to filter by (e.g. "MN", "CO")'),
     },
     async ({ niche_id, state }) => {
+      if (!isNicheEnabled(niche_id)) {
+        return errorResponse('NOT_FOUND', `Niche "${niche_id}" is not available. Use list_niches to see available niches.`);
+      }
       try {
         let sql = `
           SELECT c.name, c.state_abbr, c.slug, c.metro_area,

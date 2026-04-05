@@ -27,6 +27,27 @@ export function parseJsonArray(val: string | null): string[] {
 export const SCHEMA_VERSION = '1.0';
 
 /**
+ * Launch-ready niches — only these are served via MCP.
+ * Add niches here as their rating backfill completes.
+ */
+export const ENABLED_NICHES = new Set([
+  'coated-local',
+  'radon-local',
+  'crawl-local',
+  'suds-local',
+]);
+
+/** SQL placeholder string for use in IN clauses. */
+export function nicheInClause(): string {
+  return [...ENABLED_NICHES].map(() => '?').join(', ');
+}
+
+/** Bind values for the IN clause. */
+export function nicheBindValues(): string[] {
+  return [...ENABLED_NICHES];
+}
+
+/**
  * Wrap a tool response with metadata that helps agents assess data quality.
  * Every MCP tool response should use this to maintain consistent structure.
  */
@@ -50,6 +71,11 @@ export function wrapResponse(data: {
     null,
     2,
   );
+}
+
+/** Check if a niche is enabled for MCP access. */
+export function isNicheEnabled(nicheId: string): boolean {
+  return ENABLED_NICHES.has(nicheId);
 }
 
 /** Structured error response — consistent shape for all tool failures. */

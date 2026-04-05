@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { SERVICE_LABELS, getServiceTypesForNiche } from '../lib/service-labels.js';
-import { wrapResponse, errorResponse } from '../lib/response.js';
+import { wrapResponse, errorResponse, isNicheEnabled } from '../lib/response.js';
 
 export function registerListServiceTypes(server: McpServer, db: D1Database) {
   server.tool(
@@ -11,6 +11,9 @@ export function registerListServiceTypes(server: McpServer, db: D1Database) {
       niche_id: z.string().describe('Niche ID (e.g. "coated-local", "radon-local"). Get options from list_niches.'),
     },
     async ({ niche_id }) => {
+      if (!isNicheEnabled(niche_id)) {
+        return errorResponse('NOT_FOUND', `Niche "${niche_id}" is not available. Use list_niches to see available niches.`);
+      }
       try {
         const staticTypes = getServiceTypesForNiche(niche_id);
 
