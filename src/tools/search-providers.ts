@@ -83,6 +83,7 @@ export function registerSearchProviders(server: McpServer, db: D1Database) {
           JOIN niches n ON n.id = p.niche_id
           WHERE p.niche_id = ?
             AND p.verified = 1
+            AND p.review_status = 'approved'
             ${cityFilter}
             ${serviceFilter}
           ORDER BY

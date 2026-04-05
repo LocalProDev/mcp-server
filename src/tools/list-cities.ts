@@ -20,7 +20,7 @@ export function registerListCities(server: McpServer, db: D1Database) {
                  (SELECT COUNT(DISTINCT pl.provider_id)
                   FROM provider_locations pl
                   JOIN providers p ON p.id = pl.provider_id
-                  WHERE pl.city_id = c.id AND p.verified = 1) AS provider_count
+                  WHERE pl.city_id = c.id AND p.verified = 1 AND p.review_status = 'approved') AS provider_count
           FROM cities c
           WHERE c.niche_id = ? AND c.published = 1`;
         const binds: string[] = [niche_id];

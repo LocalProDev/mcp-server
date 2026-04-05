@@ -22,7 +22,7 @@ export function registerListServiceTypes(server: McpServer, db: D1Database) {
             `SELECT DISTINCT ps.service_type
              FROM provider_services ps
              JOIN providers p ON p.id = ps.provider_id
-             WHERE p.niche_id = ? AND p.verified = 1
+             WHERE p.niche_id = ? AND p.verified = 1 AND p.review_status = 'approved'
              ORDER BY ps.service_type`,
           )
           .bind(niche_id)

@@ -11,7 +11,7 @@ export function registerListNiches(server: McpServer, db: D1Database) {
         const { results } = await db
           .prepare(
             `SELECT n.id, n.name, n.slug, n.domain,
-                    (SELECT COUNT(*) FROM providers p WHERE p.niche_id = n.id AND p.verified = 1) AS provider_count
+                    (SELECT COUNT(*) FROM providers p WHERE p.niche_id = n.id AND p.verified = 1 AND p.review_status = 'approved') AS provider_count
              FROM niches n
              WHERE n.id IN (${nicheInClause()})
              ORDER BY n.name`,

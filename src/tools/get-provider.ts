@@ -60,7 +60,7 @@ export function registerGetProvider(server: McpServer, db: D1Database) {
                     n.domain AS niche_domain
              FROM providers p
              JOIN niches n ON n.id = p.niche_id
-             WHERE p.niche_id = ? AND p.slug = ? AND p.verified = 1`,
+             WHERE p.niche_id = ? AND p.slug = ? AND p.verified = 1 AND p.review_status = 'approved'`,
           )
           .bind(niche_id, provider_slug)
           .first<ProviderDetailRow>();
