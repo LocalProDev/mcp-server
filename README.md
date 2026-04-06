@@ -26,6 +26,8 @@ LocalPro exposes a curated database of **2,950+ verified local trade and service
 | Septic Services | `pump-local` | Rating enrichment in progress |
 | Remediation | `abate-local` | Rating enrichment in progress |
 | Commercial Electrical | `hire-electrical` | Service enrichment in progress |
+| Water Damage Restoration | `soaked-local` | Data collection in progress |
+| Well Water Services | `wellwater-local` | Pre-pipeline (560 providers scraped, county-based model) |
 
 ## Quick Start
 
