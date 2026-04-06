@@ -6,21 +6,26 @@ When someone asks an AI assistant *"find me a radon mitigation company near Denv
 
 ## What it does
 
-LocalPro exposes a curated database of **8,600+ verified local trade and service businesses** across 9 categories:
+LocalPro exposes a curated database of **2,950+ verified local trade and service businesses** across 4 live categories, with 5 more being added:
 
-| Category | Niche ID | Example Services |
-|----------|----------|-----------------|
-| Floor Coating | `coated-local` | Epoxy, polyaspartic, metallic, concrete polishing |
-| Radon | `radon-local` | Testing, mitigation, sub-slab depressurization |
-| Foundation Repair | `slab-local` | Pier installation, mudjacking, foam injection, leveling |
-| Basement Waterproofing | `basement-local` | Interior/exterior waterproofing, drainage, sump pumps |
-| Crawl Space Repair | `crawl-local` | Encapsulation, vapor barrier, structural repair |
-| Remediation | `abate-local` | Mold, asbestos, lead paint removal, air quality testing |
-| Septic Services | `pump-local` | Pumping, inspection, drain field repair |
-| Commercial Electrical | `hire-electrical` | IR thermography, generators, EV chargers |
-| Laundry Services | `suds-local` | Wash & fold, dry cleaning, pickup & delivery |
+### Live Now
 
-Coverage spans **major US metro areas** across 48 states.
+| Category | Niche ID | Providers | States | Example Services |
+|----------|----------|-----------|--------|-----------------|
+| Crawl Space Repair | `crawl-local` | 1,222 | 46 | Encapsulation, vapor barrier, structural repair |
+| Floor Coating | `coated-local` | 713 | 47 | Epoxy, polyaspartic, metallic, concrete polishing |
+| Laundry Services | `suds-local` | 681 | 39 | Wash & fold, dry cleaning, pickup & delivery |
+| Radon | `radon-local` | 334 | 15 | Testing, mitigation, sub-slab depressurization |
+
+### Coming Soon
+
+| Category | Niche ID | Status |
+|----------|----------|--------|
+| Foundation Repair | `slab-local` | Rating enrichment in progress |
+| Basement Waterproofing | `basement-local` | Rating enrichment in progress |
+| Septic Services | `pump-local` | Rating enrichment in progress |
+| Remediation | `abate-local` | Rating enrichment in progress |
+| Commercial Electrical | `hire-electrical` | Service enrichment in progress |
 
 ## Quick Start
 
@@ -329,15 +334,27 @@ Errors use the same envelope with an `error` object:
 
 Fields marked nullable return `null` when data is unavailable — they are **never omitted** from the response. Arrays return `[]` when empty, never `null`.
 
-## Authentication
+## Access Tiers
 
-All `/mcp` requests require an `X-API-Key` header. Discovery endpoints (`/.well-known/*`) are public.
+### Public (no authentication)
+
+All search and list tools work without an API key:
+- `list_niches`, `list_cities`, `list_service_types`, `search_providers`
+- `get_provider` returns basic data (name, description, rating, services, pricing summary, listing URL)
+- Rate limited to 30 requests/minute per IP
+
+### Premium (API key)
+
+Include an `X-API-Key` header to unlock additional data on `get_provider`:
+- Full pricing array (vs. summary string)
+- Certifications and credentials
+- Rate limited to 30 requests/minute per key
 
 ```
 X-API-Key: your-api-key
 ```
 
-Missing or invalid keys return `401` or `403` with a structured error body.
+Request an API key at [localpro.dev](https://localpro.dev/#get-started) or email will@laced.dev.
 
 ## Discovery
 
@@ -355,38 +372,29 @@ AI agents can self-discover this server via standard well-known endpoints:
 
 ## Rate Limits
 
-| Tier | Limit |
-|------|-------|
-| Standard | 30 requests/minute per API key |
+| Access | Limit |
+|--------|-------|
+| Public (no key) | 30 requests/minute per IP |
+| Premium (API key) | 30 requests/minute per key |
 
 Higher limits available for partners — contact will@laced.dev.
 
-## Data Coverage
+## Data Coverage (Live Categories)
 
-LocalPro serves verified provider data across 9 trade categories. Coverage and completeness vary by niche:
-
-| Category | Providers | States | Cities | Phone | Description | Services |
-|----------|-----------|--------|--------|-------|-------------|----------|
-| Foundation Repair | 1,656 | 27 | 638 | 99% | 69% | 65% |
-| Crawl Space Repair | 1,219 | 46 | 521 | 89% | 88% | 88% |
-| Septic Services | 1,165 | 46 | 592 | 98% | 88% | 78% |
-| Remediation | 1,158 | 21 | 475 | 100% | 88% | 87% |
-| Basement Waterproofing | 1,126 | 48 | 583 | 91% | 65% | 66% |
-| Floor Coating | 705 | 47 | 485 | 99% | 87% | 87% |
-| Laundry Services | 680 | 39 | 2,933 | 99% | 98% | 98% |
-| Commercial Electrical | 618 | 15 | 202 | 98% | 67% | 0%* |
-| Radon | 331 | 15 | 214 | 99% | 87% | 84% |
-
-*\*Commercial Electrical enrichment is in progress.*
+| Category | Providers | States | Cities | Rating | Phone | Description | Services |
+|----------|-----------|--------|--------|--------|-------|-------------|----------|
+| Crawl Space Repair | 1,222 | 46 | 521 | 92% | 90% | 90% | 82% |
+| Floor Coating | 713 | 47 | 485 | 78% | 98% | 88% | 73% |
+| Laundry Services | 681 | 39 | 2,933 | 53% | 98% | 89% | 82% |
+| Radon | 334 | 15 | 214 | 86% | 96% | 86% | 60% |
 
 **What this means for agents:**
-- **Name, city, state** are 100% complete across all niches — every result has these fields.
-- **Phone** is 89–100% — the vast majority of providers have contact info on their listing page.
-- **Services and descriptions** vary — some niches are deeply enriched (88%+), others are being backfilled.
-- **Ratings** are being backfilled via Google Places. Coverage is growing weekly.
-- Fields that don't have data return explicit `null` — never omitted, never empty strings pretending to be values.
-
-Data is refreshed weekly. Coverage percentages improve with each enrichment cycle.
+- **Name, city, state** are 100% complete — every result has these fields.
+- **Ratings** are 53–92% — most providers have Google ratings; laundry services have lower coverage because many local laundromats don't have Google Places listings.
+- **Phone** is 90–98% — contact info available on listing pages via `listing_url`.
+- **Services and descriptions** are 60–90% — enriched from provider websites.
+- Fields without data return explicit `null` — never omitted, never empty strings.
+- Data is enriched and refreshed weekly. Additional categories are being prepared for launch.
 
 ## Self-Hosting
 

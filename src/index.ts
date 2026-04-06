@@ -31,32 +31,40 @@ function createServer(db: D1Database, authenticated: boolean): McpServer {
 // ---- Well-known discovery endpoints ----
 
 const LLMS_TXT = `# LocalPro MCP Server
-> A Model Context Protocol server providing verified local service provider data across 9 trade categories in major US metro areas.
+> Verified local service provider data for AI agents. 2,950+ providers across 4 trade categories, with more being added.
 
 ## What this server does
-LocalPro exposes a curated database of verified local trade and service businesses — floor coating contractors, radon mitigation specialists, foundation repair companies, basement waterproofing, crawl space repair, mold/asbestos/lead remediation, septic services, commercial electricians, and laundry services.
+LocalPro serves structured, verified data about local trade and service businesses. Currently live with 4 categories:
+- Floor Coating (epoxy, polyaspartic, metallic) — 713 providers, 47 states
+- Crawl Space Repair (encapsulation, structural, waterproofing) — 1,222 providers, 46 states
+- Radon Testing & Mitigation — 334 providers, 15 states
+- Laundry Services (wash & fold, pickup & delivery) — 681 providers, 39 states
+
+Additional categories (foundation repair, waterproofing, remediation, septic, electrical) are being enriched and will be added soon.
 
 ## MCP Endpoint
 POST /mcp
 
-## Authentication
-Include your API key in the X-API-Key header on all /mcp requests.
+## Access
+- Search and list tools are PUBLIC — no authentication required
+- get_provider returns basic data publicly; full pricing and certifications require an API key (X-API-Key header)
+- Rate limited to 30 requests/minute per IP or API key
 
 ## Available Tools
-- list_niches: Discover available service directories (9 trade categories)
-- list_cities: Find available metro areas for a given trade category
-- list_service_types: Get valid service type filters for a given trade category
-- search_providers: Search for verified providers by location, service type, and trade category
-- get_provider: Get detailed provider profile including services, pricing, and certifications
+- list_niches: Discover available service categories (public)
+- list_cities: Find available metro areas for a category (public)
+- list_service_types: Get valid service type filters (public)
+- search_providers: Search for verified providers by location and service type (public)
+- get_provider: Detailed provider profile — basic data public, premium fields (certifications, full pricing) require API key
 
 ## Data
 - All providers are verified before inclusion
-- Covers major US metropolitan areas
-- Contact details (phone, email, address) available on provider listing pages — not via MCP
-- Data is curated and updated regularly from multiple sources
+- Ratings sourced from Google Places (78-92% coverage on live niches)
+- Contact details (phone, email, address) available on provider listing pages via listing_url
+- Data is enriched and refreshed weekly
 
 ## Operator
-LocalPro is operated by Laced Labs LLC — https://laced.dev
+LocalPro is built and operated by Laced Labs LLC — https://laced.dev
 `;
 
 const MCP_JSON = JSON.stringify(
@@ -64,17 +72,28 @@ const MCP_JSON = JSON.stringify(
     name: 'LocalPro',
     version: '1.0.0',
     description:
-      'Verified local service provider directory covering 9 trade categories across major US metro areas. Find contractors for floor coating, radon mitigation, foundation repair, waterproofing, and more.',
+      'Verified local service provider directory. 2,950+ providers across floor coating, crawl space repair, radon mitigation, and laundry services. Public access, rate-limited. More categories coming soon.',
     endpoint: '/mcp',
     transport: 'streamable-http',
-    authentication: { type: 'api-key', header: 'X-API-Key' },
-    tools: [
-      { name: 'list_niches', description: 'Discover available service directories (9 trade categories)' },
-      { name: 'list_cities', description: 'Find available metro areas for a given trade category' },
-      { name: 'list_service_types', description: 'Get valid service type filters for a given trade category' },
-      { name: 'search_providers', description: 'Search for verified providers by location, service type, and trade category' },
-      { name: 'get_provider', description: 'Get detailed provider profile including services, pricing, and certifications' },
+    authentication: {
+      type: 'api-key',
+      header: 'X-API-Key',
+      note: 'Optional. Search and list tools are public. API key unlocks premium fields (certifications, full pricing) on get_provider.',
+    },
+    categories: [
+      { id: 'coated-local', name: 'Floor Coating', providers: 713, states: 47 },
+      { id: 'crawl-local', name: 'Crawl Space Repair', providers: 1222, states: 46 },
+      { id: 'radon-local', name: 'Radon Testing & Mitigation', providers: 334, states: 15 },
+      { id: 'suds-local', name: 'Laundry Services', providers: 681, states: 39 },
     ],
+    tools: [
+      { name: 'list_niches', description: 'Discover available service categories', access: 'public' },
+      { name: 'list_cities', description: 'Find available metro areas for a category', access: 'public' },
+      { name: 'list_service_types', description: 'Get valid service type filters', access: 'public' },
+      { name: 'search_providers', description: 'Search for verified providers by location and service type', access: 'public' },
+      { name: 'get_provider', description: 'Detailed provider profile with services, pricing, and certifications', access: 'public (premium fields require API key)' },
+    ],
+    rate_limit: { requests: 30, period_seconds: 60 },
     operator: { name: 'Laced Labs LLC', url: 'https://laced.dev' },
   },
   null,
