@@ -6,16 +6,16 @@ When someone asks an AI assistant *"find me a radon mitigation company near Denv
 
 ## What it does
 
-LocalPro exposes a curated database of **2,950+ verified local trade and service businesses** across 4 live categories, with 5 more being added:
+LocalPro exposes a curated database of **2,100+ fully profiled local trade and service businesses** across 4 live categories, with 5 more being added. Every provider served has a Google rating, business description, and services list — no incomplete data.
 
 ### Live Now
 
-| Category | Niche ID | Providers | States | Example Services |
-|----------|----------|-----------|--------|-----------------|
-| Crawl Space Repair | `crawl-local` | 1,222 | 46 | Encapsulation, vapor barrier, structural repair |
-| Floor Coating | `coated-local` | 713 | 47 | Epoxy, polyaspartic, metallic, concrete polishing |
-| Laundry Services | `suds-local` | 681 | 39 | Wash & fold, dry cleaning, pickup & delivery |
-| Radon | `radon-local` | 334 | 15 | Testing, mitigation, sub-slab depressurization |
+| Category | Niche ID | Providers | Example Services |
+|----------|----------|-----------|-----------------|
+| Crawl Space Repair | `crawl-local` | 1,050 | Encapsulation, vapor barrier, structural repair |
+| Floor Coating | `coated-local` | 522 | Epoxy, polyaspartic, metallic, concrete polishing |
+| Laundry Services | `suds-local` | 321 | Wash & fold, dry cleaning, pickup & delivery |
+| Radon | `radon-local` | 269 | Testing, mitigation, sub-slab depressurization |
 
 ### Coming Soon
 
@@ -109,7 +109,7 @@ Discover available service directories. Call this first.
       "name": "Epoxy & Concrete Coating Installers",
       "slug": "epoxy-floor-coating",
       "domain": "coatedlocal.com",
-      "provider_count": 713
+      "provider_count": 522
     }
   ]
 }
@@ -312,15 +312,14 @@ Errors use the same envelope with an `error` object:
 
 | Field | Type | Nullable | Description |
 |-------|------|----------|-------------|
-| `name` | string | no | Business name |
-| `description` | string | yes | Business description |
-| `city` | string | no | City name |
-| `state` | string | no | Two-letter state abbreviation |
-| `rating` | number | yes | Google rating (1.0–5.0) |
+| `name` | string | no | Business name (always present) |
+| `description` | string | no | Business description (always present) |
+| `city` | string | no | City name (always present) |
+| `state` | string | no | Two-letter state abbreviation (always present) |
+| `rating` | number | no | Google rating 1.0–5.0 (always present) |
 | `review_count` | number | yes | Number of Google reviews |
-| `services` | array | no | `[{ type: string, label: string }]` |
-| `pricing` | array | no | Pricing info strings (may be empty `[]`) |
-| `certifications` | array | no | Certification/credential names (may be empty `[]`) |
+| `services` | array | no | `[{ type: string, label: string }]` (always present, non-empty) |
+| `pricing_summary` | string | yes | Pricing info (public access) |
 | `coverage_area` | string | yes | Geographic coverage description |
 | `years_in_business` | number | yes | Years operating |
 | `listing_url` | string | no | Full profile URL with contact details |
@@ -356,7 +355,7 @@ Include an `X-API-Key` header to unlock additional data on `get_provider`:
 X-API-Key: your-api-key
 ```
 
-Request an API key at [localpro.dev](https://localpro.dev/#get-started) or email will@laced.dev.
+Request an API key at [localpro.dev](https://localpro.dev/#get-started) or email will@localpro.dev.
 
 ## Discovery
 
@@ -379,24 +378,27 @@ AI agents can self-discover this server via standard well-known endpoints:
 | Public (no key) | 30 requests/minute per IP |
 | Premium (API key) | 30 requests/minute per key |
 
-Higher limits available for partners — contact will@laced.dev.
+Higher limits available for partners — contact will@localpro.dev.
 
-## Data Coverage (Live Categories)
+## Data Quality
 
-| Category | Providers | States | Cities | Rating | Phone | Description | Services |
-|----------|-----------|--------|--------|--------|-------|-------------|----------|
-| Crawl Space Repair | 1,222 | 46 | 521 | 92% | 90% | 90% | 82% |
-| Floor Coating | 713 | 47 | 485 | 78% | 98% | 88% | 73% |
-| Laundry Services | 681 | 39 | 2,933 | 53% | 98% | 89% | 82% |
-| Radon | 334 | 15 | 214 | 86% | 96% | 86% | 60% |
+Every provider returned by the API has been verified and meets a minimum completeness threshold:
 
-**What this means for agents:**
-- **Name, city, state** are 100% complete — every result has these fields.
-- **Ratings** are 53–92% — most providers have Google ratings; laundry services have lower coverage because many local laundromats don't have Google Places listings.
-- **Phone** is 90–98% — contact info available on listing pages via `listing_url`.
-- **Services and descriptions** are 60–90% — enriched from provider websites.
-- Fields without data return explicit `null` — never omitted, never empty strings.
-- Data is enriched and refreshed weekly. Additional categories are being prepared for launch.
+- **Google rating** — present on 100% of results
+- **Business description** — present on 100% of results
+- **Services list** — present on 100% of results
+- **Name, city, state** — present on 100% of results
+
+| Category | Providers | Coverage |
+|----------|-----------|----------|
+| Crawl Space Repair | 1,050 | 46 states |
+| Floor Coating | 522 | 47 states |
+| Laundry Services | 321 | 39 states |
+| Radon | 269 | 15 states |
+
+**Additional fields** (pricing, certifications, coverage area, years in business) are available on many providers but not guaranteed. Fields without data return explicit `null` — never omitted, never empty strings.
+
+Data is enriched and refreshed weekly. Additional categories are being prepared for launch.
 
 ## Self-Hosting
 
