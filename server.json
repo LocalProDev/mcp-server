@@ -1,0 +1,25 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.LocalProDev/local-services",
+  "title": "LocalPro — Verified US Local Service Provider Data",
+  "description": "Verified US local service provider data across trades. Ratings, services, pricing.",
+  "version": "1.0.0",
+  "repository": {
+    "url": "https://github.com/LocalProDev/mcp-server",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.localpro.dev/mcp",
+      "headers": [
+        {
+          "name": "X-API-Key",
+          "description": "Optional API key for premium fields (certifications, full pricing). All search and list tools work without a key.",
+          "isRequired": false,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}
