@@ -31,6 +31,26 @@ LocalPro exposes a curated database of **7,000+ fully profiled local trade and s
 
 ## Quick Start
 
+**No API key required.** All search and list tools are public. An optional API key unlocks pro fields on `get_provider` (full pricing array, certifications) — see [Access Tiers](#access-tiers).
+
+### 60-second probe
+
+Confirm the server is live without any client setup:
+
+```bash
+curl -s https://mcp.localpro.dev/.well-known/mcp.json | head -20
+```
+
+This returns the schema-2.0 manifest: tool list, rate limits, and operator info. If you see a `"schema_version": "2.0"` JSON document, the server is healthy.
+
+### Claude Code CLI
+
+```bash
+claude mcp add --transport http localpro https://mcp.localpro.dev/mcp
+```
+
+That's it — `list_niches`, `search_providers`, etc. are now available in your Claude Code session.
+
 ### Claude Desktop
 
 Add to your `claude_desktop_config.json`:
@@ -39,14 +59,13 @@ Add to your `claude_desktop_config.json`:
 {
   "mcpServers": {
     "localpro": {
-      "url": "https://mcp.localpro.dev/mcp",
-      "headers": {
-        "X-API-Key": "your-api-key"
-      }
+      "url": "https://mcp.localpro.dev/mcp"
     }
   }
 }
 ```
+
+(Add an `"X-API-Key"` header inside a `"headers"` block only if you have a premium key.)
 
 ### Cursor
 
@@ -56,34 +75,74 @@ Add to `.cursor/mcp.json`:
 {
   "mcpServers": {
     "localpro": {
-      "url": "https://mcp.localpro.dev/mcp",
-      "headers": {
-        "X-API-Key": "your-api-key"
-      }
+      "url": "https://mcp.localpro.dev/mcp"
     }
   }
 }
 ```
 
-### Raw HTTP
+### Raw HTTP (JSON-RPC)
+
+The MCP protocol is JSON-RPC over HTTP. Because this server runs in stateless mode, you can call any public tool directly:
 
 ```bash
-# Initialize session
-curl -X POST https://mcp.localpro.dev/mcp \
+curl -s -X POST https://mcp.localpro.dev/mcp \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
-  -H "X-API-Key: your-api-key" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "initialize",
-    "params": {
-      "protocolVersion": "2025-03-26",
-      "capabilities": {},
-      "clientInfo": { "name": "example", "version": "1.0" }
-    }
-  }'
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"list_niches","arguments":{}}}'
 ```
+
+You'll get back a Server-Sent-Events frame with the 9 niches, their slugs, and current provider counts.
+
+### TypeScript SDK
+
+```ts
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+
+const transport = new StreamableHTTPClientTransport(
+  new URL('https://mcp.localpro.dev/mcp'),
+);
+const client = new Client({ name: 'localpro-example', version: '1.0' });
+await client.connect(transport);
+
+const niches = await client.callTool({ name: 'list_niches', arguments: {} });
+console.log(niches);
+
+const denver = await client.callTool({
+  name: 'search_providers',
+  arguments: { niche_id: 'radon-local', city: 'denver-co', limit: 3 },
+});
+console.log(denver);
+```
+
+Install: `npm i @modelcontextprotocol/sdk`
+
+### Python SDK
+
+```python
+import asyncio
+from mcp import ClientSession
+from mcp.client.streamable_http import streamablehttp_client
+
+async def main():
+    async with streamablehttp_client("https://mcp.localpro.dev/mcp") as (read, write, _):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+
+            niches = await session.call_tool("list_niches", {})
+            print(niches)
+
+            denver = await session.call_tool(
+                "search_providers",
+                {"niche_id": "radon-local", "city": "denver-co", "limit": 3},
+            )
+            print(denver)
+
+asyncio.run(main())
+```
+
+Install: `pip install mcp`
 
 ## Tools
 
