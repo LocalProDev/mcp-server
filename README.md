@@ -6,27 +6,27 @@ When someone asks an AI assistant *"find me a radon mitigation company near Denv
 
 ## What it does
 
-LocalPro exposes a curated database of **2,100+ fully profiled local trade and service businesses** across 4 live categories, with 5 more being added. Every provider served has a Google rating, business description, and services list — no incomplete data.
+LocalPro exposes a curated database of **7,000+ fully profiled local trade and service businesses** across 9 live categories. Every provider served has a Google rating, business description, services list, opening hours, business status, and (where available) Google AI-generated business summary plus up to 5 recent reviews — no incomplete data.
 
 ### Live Now
 
 | Category | Niche ID | Providers | Example Services |
 |----------|----------|-----------|-----------------|
-| Crawl Space Repair | `crawl-local` | 1,050 | Encapsulation, vapor barrier, structural repair |
-| Floor Coating | `coated-local` | 522 | Epoxy, polyaspartic, metallic, concrete polishing |
-| Laundry Services | `suds-local` | 321 | Wash & fold, dry cleaning, pickup & delivery |
-| Radon | `radon-local` | 269 | Testing, mitigation, sub-slab depressurization |
+| Water Damage Restoration | `soaked-local` | 1,125+ | Flood cleanup, mold remediation, structural drying |
+| Foundation Repair | `slab-local` | 1,025+ | Pier installation, mudjacking, foam injection, leveling |
+| Crawl Space Repair | `crawl-local` | 1,025+ | Encapsulation, vapor barrier, structural repair, waterproofing |
+| Mold & Asbestos | `abate-local` | 950+ | Mold, asbestos, lead paint remediation |
+| Septic Services | `pump-local` | 850+ | Pumping, inspection, drain field repair |
+| Basement Waterproofing | `basement-local` | 600+ | Interior/exterior waterproofing, drainage, sump pumps |
+| Laundry Services | `suds-local` | 575+ | Wash & fold, dry cleaning, pickup & delivery |
+| Floor Coating | `coated-local` | 500+ | Epoxy, polyaspartic, metallic, flake, concrete polishing |
+| Radon | `radon-local` | 250+ | Testing, mitigation, sub-slab depressurization |
 
 ### Coming Soon
 
 | Category | Niche ID | Status |
 |----------|----------|--------|
-| Foundation Repair | `slab-local` | Rating enrichment in progress |
-| Basement Waterproofing | `basement-local` | Rating enrichment in progress |
-| Septic Services | `pump-local` | Rating enrichment in progress |
-| Remediation | `abate-local` | Rating enrichment in progress |
-| Commercial Electrical | `hire-electrical` | Service enrichment in progress |
-| Water Damage Restoration | `soaked-local` | Data collection in progress |
+| Commercial Electrical | `hire-electrical` | Public-facing filter + targeted backfill plan in progress |
 | Well Water Services | `wellwater-local` | Pre-pipeline (560 providers scraped, county-based model) |
 
 ## Quick Start
@@ -98,18 +98,23 @@ Discover available service directories. Call this first.
 ```json
 {
   "meta": {
-    "schema_version": "1.0",
+    "schema_version": "2.0",
     "total_results": 9,
     "niche": null,
+    "data_freshness": {
+      "directory_refresh_cadence": "weekly",
+      "google_data_refresh_cadence": "quarterly",
+      "scraped_at": "2026-04-27T13:57:21Z"
+    },
     "data_note": "Use niche_id values with search_providers, list_cities, and list_service_types."
   },
   "results": [
     {
-      "niche_id": "coated-local",
-      "name": "Epoxy & Concrete Coating Installers",
-      "slug": "epoxy-floor-coating",
-      "domain": "coatedlocal.com",
-      "provider_count": 522
+      "niche_id": "soaked-local",
+      "name": "Water Damage Restoration Contractors",
+      "slug": "water-damage-restoration",
+      "domain": "soakedlocal.com",
+      "provider_count": 1128
     }
   ]
 }
@@ -201,9 +206,15 @@ Search for verified providers by location, service type, and trade category.
 ```json
 {
   "meta": {
-    "schema_version": "1.0",
+    "schema_version": "2.0",
     "total_results": 3,
     "niche": "coated-local",
+    "data_freshness": {
+      "directory_refresh_cadence": "weekly",
+      "google_data_refresh_cadence": "quarterly",
+      "scraped_at": "2026-04-27T03:03:10Z",
+      "google_refreshed_at": "2026-04-27T04:53:51Z"
+    },
     "data_note": "Verified providers only. Visit listing_url for full contact details."
   },
   "results": [
@@ -214,15 +225,17 @@ Search for verified providers by location, service type, and trade category.
       "state": "CO",
       "rating": 4.9,
       "review_count": 47,
+      "business_status": "OPERATIONAL",
+      "google_maps_url": "https://www.google.com/maps/place/...",
       "services": [
         { "type": "epoxy", "label": "Epoxy Floor Coating" },
         { "type": "polyaspartic", "label": "Polyaspartic Coating" }
       ],
-      "pricing": ["$6-9/sq ft"],
-      "certifications": ["Penntek Certified Installer"],
+      "pricing_summary": "$6-9/sq ft",
       "coverage_area": "Denver metro, Front Range, 50-mile radius",
       "years_in_business": 8,
-      "listing_url": "https://coatedlocal.com/providers/denver-co/colorado-concrete-coatings/"
+      "listing_url": "https://coatedlocal.com/providers/denver-co/colorado-concrete-coatings/",
+      "pro_available": true
     }
   ]
 }
@@ -243,7 +256,12 @@ Get detailed profile for a specific provider. Use the `provider_slug` from searc
 
 ```json
 {
-  "meta": { "schema_version": "1.0", "total_results": 1, "niche": "coated-local" },
+  "meta": {
+    "schema_version": "2.0",
+    "total_results": 1,
+    "niche": "coated-local",
+    "data_freshness": { "directory_refresh_cadence": "weekly", "google_data_refresh_cadence": "quarterly" }
+  },
   "results": [
     {
       "name": "Colorado Concrete Coatings",
@@ -270,7 +288,31 @@ Get detailed profile for a specific provider. Use the `provider_slug` from searc
           "turnaround": "two_day"
         }
       ],
-      "listing_url": "https://coatedlocal.com/providers/denver-co/colorado-concrete-coatings/"
+      "listing_url": "https://coatedlocal.com/providers/denver-co/colorado-concrete-coatings/",
+      "google_data": {
+        "business_status": "OPERATIONAL",
+        "google_maps_url": "https://www.google.com/maps/place/...",
+        "formatted_address": "1234 Main St, Denver, CO 80202, USA",
+        "opening_hours": [
+          { "@type": "OpeningHoursSpecification", "dayOfWeek": "https://schema.org/Monday", "opens": "08:00", "closes": "17:00" }
+        ],
+        "summary": {
+          "text": "Full-service epoxy floor coating contractor specializing in garage and commercial floors across the Denver metro.",
+          "source": "localpro_ai"
+        },
+        "recent_reviews": [
+          {
+            "rating": 5,
+            "text": "Exceptional work on our garage floor — finished on time and within budget.",
+            "author": "Jane D.",
+            "published_at": "2025-11-14T18:51:02Z",
+            "source_url": "https://www.google.com/maps/reviews/..."
+          }
+        ]
+      },
+      "json_ld": { "@context": "https://schema.org", "@type": "LocalBusiness", "...": "..." },
+      "credibility": { "verified": true, "listing_tier": "free", "data_sources": ["..."] },
+      "citation": { "display_name": "Colorado Concrete Coatings — Denver, CO", "...": "..." }
     }
   ]
 }
@@ -285,14 +327,22 @@ Every response is wrapped in a consistent envelope:
 ```typescript
 {
   meta: {
-    schema_version: string   // Currently "1.0"
-    total_results: number    // Count of items in results array
-    niche: string | null     // Niche ID if applicable
-    data_note: string        // Context about the data returned
+    schema_version: string                // Currently "2.0"
+    total_results: number                 // Count of items in results array
+    niche: string | null                  // Niche ID if applicable
+    data_freshness: {
+      directory_refresh_cadence: string   // "weekly"
+      google_data_refresh_cadence: string // "quarterly"
+      scraped_at?: string                 // ISO datetime — most recent directory write
+      google_refreshed_at?: string        // ISO datetime — most recent Google Places refresh
+    }
+    data_note: string                     // Context about the data returned
   }
-  results: Array<T>          // Tool-specific result objects
+  results: Array<T>                       // Tool-specific result objects
 }
 ```
+
+**Cadence framing.** The directory layer (provider names, services, websites, descriptions) refreshes weekly via a scraping pipeline. The Google Places layer (rating, reviews, opening hours, business status, AI summary) refreshes quarterly via Google Places Text Search Enterprise. Two cadences, both deliberate. AI agents that need real-time data should call back periodically rather than caching responses indefinitely.
 
 ### Error Response
 
@@ -318,6 +368,8 @@ Errors use the same envelope with an `error` object:
 | `state` | string | no | Two-letter state abbreviation (always present) |
 | `rating` | number | no | Google rating 1.0–5.0 (always present) |
 | `review_count` | number | yes | Number of Google reviews |
+| `business_status` | string | yes | `OPERATIONAL` / `CLOSED_TEMPORARILY` (`CLOSED_PERMANENTLY` filtered automatically) |
+| `google_maps_url` | string | yes | Direct link to Google Maps listing |
 | `services` | array | no | `[{ type: string, label: string }]` (always present, non-empty) |
 | `pricing_summary` | string | yes | Pricing info (public access) |
 | `coverage_area` | string | yes | Geographic coverage description |
@@ -330,6 +382,21 @@ Errors use the same envelope with an `error` object:
 |-------|------|-------------|
 | `service_areas` | array | `[{ city, state, radius_miles }]` |
 | `service_details` | array | `[{ type, label, pricing_model, price_range, turnaround }]` |
+| `google_data` | object | Structured Google Places data — see below |
+| `json_ld` | object | Schema.org `LocalBusiness` JSON-LD with `AggregateRating`, `OpeningHoursSpecification`, `GeoCoordinates`, `telephone`, `sameAs` |
+| `credibility` | object | `{ verified, listing_tier, verification_date, data_sources }` |
+| `citation` | object | Pre-formatted strings: `{ display_name, in_text, attribution }` |
+
+**`google_data` block** (present on `get_provider` when Google data is available):
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `business_status` | string | `OPERATIONAL` / `CLOSED_TEMPORARILY` |
+| `google_maps_url` | string | Direct Google Maps link |
+| `formatted_address` | string | Google's canonical address |
+| `opening_hours` | array | Schema.org `OpeningHoursSpecification[]` |
+| `summary` | object | `{ text, source }` — `source` is `localpro_ai` (LocalPro-generated, no disclosure required) or `google` (with required `disclosure` field) |
+| `recent_reviews` | array | Up to 5 Google review bodies with author, rating, publish time, source URL |
 
 ### Nullable Fields
 
@@ -366,10 +433,11 @@ AI agents can self-discover this server via standard well-known endpoints:
 
 ## Data Policy
 
-- **What's returned:** Business name, city, state, rating, services, certifications, pricing ranges, coverage area, and a link to the full listing page.
+- **What's returned:** Business name, city, state, rating, services, certifications, pricing ranges, coverage area, opening hours, business status, recent reviews, AI summary, and a link to the full listing page.
 - **What's withheld:** Phone numbers, email addresses, physical addresses, and websites are available only on the listing page (via `listing_url`). This protects provider data while driving traffic to the directory.
-- **Verification:** Only providers marked as verified appear in results.
-- **Updates:** Data is enriched and refreshed weekly from multiple sources.
+- **Verification:** Only providers marked as verified appear in results. `CLOSED_PERMANENTLY` providers are filtered automatically.
+- **Updates:** Directory layer refreshed weekly. Google Places layer refreshed quarterly.
+- **Attribution:** Google reviews and AI summaries (when sourced from Google) include source URLs and required disclosure text per Google Maps Platform Terms of Service.
 
 ## Rate Limits
 
@@ -391,14 +459,19 @@ Every provider returned by the API has been verified and meets a minimum complet
 
 | Category | Providers | Coverage |
 |----------|-----------|----------|
-| Crawl Space Repair | 1,050 | 46 states |
-| Floor Coating | 522 | 47 states |
-| Laundry Services | 321 | 39 states |
-| Radon | 269 | 15 states |
+| Water Damage Restoration | 1,125+ | 49 states |
+| Foundation Repair | 1,025+ | 27 states |
+| Crawl Space Repair | 1,025+ | 41 states |
+| Mold & Asbestos | 950+ | 21 states |
+| Septic Services | 850+ | 36 states |
+| Basement Waterproofing | 600+ | 26 states |
+| Laundry Services | 575+ | 39 states |
+| Floor Coating | 500+ | 42 states |
+| Radon | 250+ | 15 states |
 
-**Additional fields** (pricing, certifications, coverage area, years in business) are available on many providers but not guaranteed. Fields without data return explicit `null` — never omitted, never empty strings.
+**Additional fields** (pricing, certifications, coverage area, years in business, opening hours, recent reviews, AI summary) are available on most providers but not guaranteed. Fields without data return explicit `null` — never omitted, never empty strings.
 
-Data is enriched and refreshed weekly. Additional categories are being prepared for launch.
+Directory data is refreshed weekly via the scraping pipeline. Google Places data (ratings, reviews, opening hours, business status) is refreshed quarterly via Text Search Enterprise. Two additional categories are being prepared for launch.
 
 ## Self-Hosting
 
@@ -414,7 +487,7 @@ Requires a Cloudflare account with a D1 database named `laced-directory`.
 
 ## Operator
 
-LocalPro is built and operated by [Laced Labs LLC](https://laced.dev).
+LocalPro is built and operated by [Laced Labs LLC](https://localpro.dev).
 
 ## License
 
