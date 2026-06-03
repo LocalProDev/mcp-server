@@ -2,6 +2,12 @@
 
 All notable changes to the LocalPro MCP Server.
 
+## Maintenance: 2026-06-03
+
+- **Liveness verified.** `list_niches` on `https://mcp.localpro.dev/mcp` returns the schema-2.0 manifest with current per-niche counts. Server healthy, no behavior change.
+- **Counts current.** 9 served niches, ~7,000 fully-profiled providers (every served provider carries a Google rating, description, and services list). The backing D1 holds 25,496 approved providers across the 10 categories; the served pool is the completeness-passing subset. README per-niche floors reconciled to live `list_niches` output (`suds-local` corrected from 575+ to 550+).
+- **Dependencies** aligned to the deployed monorepo (`@modelcontextprotocol/sdk`).
+
 ## [2.0.0] — 2026-04-27
 
 ### Added

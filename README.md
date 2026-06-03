@@ -18,7 +18,7 @@ LocalPro exposes a curated database of **7,000+ fully profiled local trade and s
 | Mold & Asbestos | `abate-local` | 950+ | Mold, asbestos, lead paint remediation |
 | Septic Services | `pump-local` | 850+ | Pumping, inspection, drain field repair |
 | Basement Waterproofing | `basement-local` | 600+ | Interior/exterior waterproofing, drainage, sump pumps |
-| Laundry Services | `suds-local` | 575+ | Wash & fold, dry cleaning, pickup & delivery |
+| Laundry Services | `suds-local` | 550+ | Wash & fold, dry cleaning, pickup & delivery |
 | Floor Coating | `coated-local` | 500+ | Epoxy, polyaspartic, metallic, flake, concrete polishing |
 | Radon | `radon-local` | 250+ | Testing, mitigation, sub-slab depressurization |
 
@@ -524,7 +524,7 @@ Every provider returned by the API has been verified and meets a minimum complet
 | Mold & Asbestos | 950+ | 21 states |
 | Septic Services | 850+ | 36 states |
 | Basement Waterproofing | 600+ | 26 states |
-| Laundry Services | 575+ | 39 states |
+| Laundry Services | 550+ | 39 states |
 | Floor Coating | 500+ | 42 states |
 | Radon | 250+ | 15 states |
 
