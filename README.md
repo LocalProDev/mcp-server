@@ -6,27 +6,28 @@ When someone asks an AI assistant *"find me a radon mitigation company near Denv
 
 ## What it does
 
-LocalPro exposes a curated database of **7,000+ fully profiled local trade and service businesses** across 9 live categories. Every provider served has a Google rating, business description, services list, opening hours, business status, and (where available) Google AI-generated business summary plus up to 5 recent reviews — no incomplete data.
+LocalPro exposes a curated database of **7,800+ fully profiled local trade and service businesses** across 10 live categories. Every provider served has a Google rating, business description, services list, opening hours, business status, and (where available) Google AI-generated business summary plus up to 5 recent reviews — no incomplete data.
 
 ### Live Now
 
 | Category | Niche ID | Providers | Example Services |
 |----------|----------|-----------|-----------------|
-| Water Damage Restoration | `soaked-local` | 1,125+ | Flood cleanup, mold remediation, structural drying |
-| Foundation Repair | `slab-local` | 1,025+ | Pier installation, mudjacking, foam injection, leveling |
+| Foundation Repair | `slab-local` | 1,050+ | Pier installation, mudjacking, foam injection, leveling |
 | Crawl Space Repair | `crawl-local` | 1,025+ | Encapsulation, vapor barrier, structural repair, waterproofing |
+| Water Damage Restoration | `soaked-local` | 950+ | Flood cleanup, mold remediation, structural drying |
 | Mold & Asbestos | `abate-local` | 950+ | Mold, asbestos, lead paint remediation |
-| Septic Services | `pump-local` | 850+ | Pumping, inspection, drain field repair |
+| Septic Services | `pump-local` | 875+ | Pumping, inspection, drain field repair |
+| Commercial Electrical | `hire-electrical` | 850+ | Commercial & industrial wiring, service upgrades, maintenance |
 | Basement Waterproofing | `basement-local` | 600+ | Interior/exterior waterproofing, drainage, sump pumps |
 | Laundry Services | `suds-local` | 550+ | Wash & fold, dry cleaning, pickup & delivery |
-| Floor Coating | `coated-local` | 500+ | Epoxy, polyaspartic, metallic, flake, concrete polishing |
-| Radon | `radon-local` | 250+ | Testing, mitigation, sub-slab depressurization |
+| Floor Coating | `coated-local` | 525+ | Epoxy, polyaspartic, metallic, flake, concrete polishing |
+| Radon | `radon-local` | 300+ | Testing, mitigation, sub-slab depressurization |
 
 ### Coming Soon
 
 | Category | Niche ID | Status |
 |----------|----------|--------|
-| Commercial Electrical | `hire-electrical` | Public-facing filter + targeted backfill plan in progress |
+| Chimney Services | `chimney-local` | Live provider data; description + service enrichment in progress |
 | Well Water Services | `wellwater-local` | Pre-pipeline (560 providers scraped, county-based model) |
 
 ## Quick Start
@@ -92,7 +93,7 @@ curl -s -X POST https://mcp.localpro.dev/mcp \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"list_niches","arguments":{}}}'
 ```
 
-You'll get back a Server-Sent-Events frame with the 9 niches, their slugs, and current provider counts.
+You'll get back a Server-Sent-Events frame with the 10 niches, their slugs, and current provider counts.
 
 ### TypeScript SDK
 
@@ -158,7 +159,7 @@ Discover available service directories. Call this first.
 {
   "meta": {
     "schema_version": "2.0",
-    "total_results": 9,
+    "total_results": 10,
     "niche": null,
     "data_freshness": {
       "directory_refresh_cadence": "weekly",

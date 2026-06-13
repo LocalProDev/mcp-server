@@ -2,6 +2,15 @@
 
 All notable changes to the LocalPro MCP Server.
 
+## [2.0.1] — 2026-06-12
+
+### Added
+- **`hire-electrical` (Commercial & Industrial Electricians) added to the allowlist — 10 niches now (was 9).** The category was rebuilt via the Google Places pipeline (35,948 raw rows pruned to ~3,000 live commercial/industrial outfits); ~858 now pass the completeness filter and serve over MCP. Resolves the prior "Coming Soon — targeted backfill in progress" status.
+
+### Changed
+- **Served pool ~7,000 → ~7,800 providers across 10 niches.** README per-niche floors recounted from live `list_niches`; server.json description updated.
+- **Coming Soon** now lists `chimney-local` (live provider data; description + service enrichment in progress) in place of `hire-electrical`.
+
 ## Maintenance: 2026-06-03
 
 - **Liveness verified.** `list_niches` on `https://mcp.localpro.dev/mcp` returns the schema-2.0 manifest with current per-niche counts. Server healthy, no behavior change.
