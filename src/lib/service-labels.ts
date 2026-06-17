@@ -1,11 +1,7 @@
-/**
- * Static service type label map — derived from niche configs.
- * Maps niche_id → { service_slug: "Human-Readable Label" }.
- *
- * This gives AI agents semantic context for service types instead of raw slugs.
- */
+type LabelMap = Record<string, string>;
+type NicheLabels = Record<string, LabelMap>;
 
-export const SERVICE_LABELS: Record<string, Record<string, string>> = {
+export const SERVICE_LABELS: NicheLabels = {
   'abate-local': {
     mold_remediation: 'Mold Remediation',
     mold_testing: 'Mold Testing & Inspection',
@@ -114,20 +110,20 @@ export const SERVICE_LABELS: Record<string, Record<string, string>> = {
   },
 };
 
-/**
- * Keyword → canonical slug mapping per niche.
- * Handles free-text enriched_services values like "epoxy flooring" → "epoxy".
- */
-const KEYWORD_MATCHERS: Record<string, Array<{ keywords: string[]; slug: string }>> = {
+interface KeywordMatcher {
+  keywords: string[];
+  slug: string;
+}
+
+const KEYWORD_MATCHERS: Record<string, KeywordMatcher[]> = {
   'coated-local': [
-    // More specific patterns MUST come before generic ones
     { keywords: ['metallic'], slug: 'metallic_epoxy' },
     { keywords: ['polyaspartic'], slug: 'polyaspartic' },
     { keywords: ['polyurea'], slug: 'polyurea' },
     { keywords: ['flake', 'chip', 'broadcast', 'quartz'], slug: 'flake_chip' },
     { keywords: ['polish'], slug: 'concrete_polishing' },
     { keywords: ['seal'], slug: 'concrete_sealing' },
-    { keywords: ['epoxy'], slug: 'epoxy' }, // Generic epoxy last — catches "epoxy flooring", "epoxy coatings"
+    { keywords: ['epoxy'], slug: 'epoxy' },
   ],
   'radon-local': [
     { keywords: ['testing', 'test', 'inspection'], slug: 'radon_testing' },
@@ -174,71 +170,16 @@ const KEYWORD_MATCHERS: Record<string, Array<{ keywords: string[]; slug: string 
     { keywords: ['mold test', 'mold inspect'], slug: 'mold_testing' },
     { keywords: ['asbestos remov', 'asbestos abat'], slug: 'asbestos_removal' },
     { keywords: ['asbestos test', 'asbestos inspect'], slug: 'asbestos_testing' },
-    { keywords: ['lead paint', 'lead remov', 'lead abat'], slug: 'lead_paint_removal' },
+    { keywords: ['lead paint remov'], slug: 'lead_paint_removal' },
     { keywords: ['lead test', 'lead inspect'], slug: 'lead_testing' },
-    { keywords: ['air quality', 'iaq'], slug: 'air_quality_testing' },
+    { keywords: ['air quality'], slug: 'air_quality_testing' },
     { keywords: ['biohazard'], slug: 'biohazard_cleanup' },
-  ],
-  'pump-local': [
-    { keywords: ['pump'], slug: 'pumping' },
-    { keywords: ['inspect'], slug: 'inspection' },
-    { keywords: ['drain field'], slug: 'drain_field_repair' },
-    { keywords: ['tank replac'], slug: 'tank_replacement' },
-    { keywords: ['install', 'new system'], slug: 'new_installation' },
-    { keywords: ['emergency'], slug: 'emergency' },
-  ],
-  'suds-local': [
-    { keywords: ['wash', 'fold'], slug: 'wash_fold' },
-    { keywords: ['dry clean'], slug: 'dry_cleaning' },
-    { keywords: ['shirt'], slug: 'shirt_service' },
-    { keywords: ['household', 'bedding', 'comforter'], slug: 'household' },
-    { keywords: ['specialty', 'wedding', 'leather'], slug: 'specialty' },
-    { keywords: ['commercial', 'business'], slug: 'commercial' },
-    { keywords: ['pickup', 'delivery'], slug: 'pickup_delivery' },
-    { keywords: ['laundry', 'general'], slug: 'laundry' },
-  ],
-  'hire-electrical': [
-    { keywords: ['ir ', 'infrared', 'thermograph'], slug: 'ir_thermography' },
-    { keywords: ['generator'], slug: 'generator_service' },
-    { keywords: ['ev ', 'charger', 'evitp'], slug: 'ev_charger' },
-    { keywords: ['commercial', 'industrial'], slug: 'commercial_electrical' },
-  ],
-  'soaked-local': [
-    { keywords: ['extract'], slug: 'water_extraction' },
-    { keywords: ['dry', 'dehumidif'], slug: 'structural_drying' },
-    { keywords: ['mold'], slug: 'mold_remediation' },
-    { keywords: ['flood'], slug: 'flood_cleanup' },
-    { keywords: ['sewage', 'black water'], slug: 'sewage_cleanup' },
-    { keywords: ['content', 'belonging'], slug: 'content_restoration' },
-    { keywords: ['reconstruct', 'rebuild'], slug: 'reconstruction' },
-    { keywords: ['emergency', '24/7', '24 hour'], slug: 'emergency_service' },
-  ],
-  'wellwater-local': [
-    { keywords: ['drill'], slug: 'well_drilling' },
-    { keywords: ['pump install'], slug: 'well_pump_installation' },
-    { keywords: ['pump repair', 'pump replac'], slug: 'well_pump_repair' },
-    { keywords: ['test', 'analys'], slug: 'water_testing' },
-    { keywords: ['soften'], slug: 'water_treatment_softener' },
-    { keywords: ['iron'], slug: 'water_treatment_iron_filter' },
-    { keywords: ['uv', 'ultraviolet', 'disinfect'], slug: 'water_treatment_uv' },
-    { keywords: ['reverse osmosis', 'ro '], slug: 'water_treatment_ro' },
-    { keywords: ['rehabilitat', 'rehab'], slug: 'well_rehabilitation' },
-    { keywords: ['abandon', 'decommission'], slug: 'well_abandonment' },
-    { keywords: ['inspect'], slug: 'well_inspection' },
   ],
 };
 
-/**
- * Look up a human-readable label for a service type value within a niche.
- * Handles both canonical slugs (from provider_services) and free-text
- * enriched_services values (from website scraping).
- */
 export function getServiceLabel(nicheId: string, value: string): string {
-  // Direct slug match first
   const directMatch = SERVICE_LABELS[nicheId]?.[value];
   if (directMatch) return directMatch;
-
-  // Fuzzy keyword match for free-text enriched values
   const matchers = KEYWORD_MATCHERS[nicheId];
   if (matchers) {
     const lower = value.toLowerCase();
@@ -248,14 +189,10 @@ export function getServiceLabel(nicheId: string, value: string): string {
       }
     }
   }
-
-  // No match — return original value (still readable by agents)
   return value;
 }
 
-/** Get all service types for a niche as { type, label } pairs. */
 export function getServiceTypesForNiche(nicheId: string): Array<{ type: string; label: string }> {
-  const labels = SERVICE_LABELS[nicheId];
-  if (!labels) return [];
+  const labels = SERVICE_LABELS[nicheId] ?? {};
   return Object.entries(labels).map(([type, label]) => ({ type, label }));
 }

@@ -6,7 +6,7 @@ When someone asks an AI assistant *"find me a radon mitigation company near Denv
 
 ## What it does
 
-LocalPro exposes a curated database of **7,800+ fully profiled local trade and service businesses** across 10 live categories. Every provider served has a Google rating, business description, services list, opening hours, business status, and (where available) Google AI-generated business summary plus up to 5 recent reviews — no incomplete data.
+LocalPro exposes a curated database of **7,000+ fully profiled local trade and service businesses** across 10 live categories. Every provider served has a customer rating, business description, services list, opening hours, business status, and (where available) an AI-generated business summary plus up to 5 recent reviews — no incomplete data.
 
 ### Live Now
 
@@ -426,7 +426,7 @@ Errors use the same envelope with an `error` object:
 | `description` | string | no | Business description (always present) |
 | `city` | string | no | City name (always present) |
 | `state` | string | no | Two-letter state abbreviation (always present) |
-| `rating` | number | no | Google rating 1.0–5.0 (always present) |
+| `rating` | number | no | Customer rating 1.0–5.0 (always present) |
 | `review_count` | number | yes | Number of Google reviews |
 | `business_status` | string | yes | `OPERATIONAL` / `CLOSED_TEMPORARILY` (`CLOSED_PERMANENTLY` filtered automatically) |
 | `google_maps_url` | string | yes | Direct link to Google Maps listing |
@@ -512,14 +512,14 @@ Higher limits available for partners — contact will@localpro.dev.
 
 Every provider returned by the API has been verified and meets a minimum completeness threshold:
 
-- **Google rating** — present on 100% of results
+- **Customer rating** — present on 100% of results
 - **Business description** — present on 100% of results
 - **Services list** — present on 100% of results
 - **Name, city, state** — present on 100% of results
 
 | Category | Providers | Coverage |
 |----------|-----------|----------|
-| Water Damage Restoration | 1,125+ | 49 states |
+| Water Damage Restoration | 950+ | 49 states |
 | Foundation Repair | 1,025+ | 27 states |
 | Crawl Space Repair | 1,025+ | 41 states |
 | Mold & Asbestos | 950+ | 21 states |

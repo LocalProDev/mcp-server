@@ -2,3 +2,10 @@ node_modules/
 dist/
 .dev.vars
 .wrangler/
+
+# Secrets — MCP registry publish tokens (never commit to this public repo)
+.mcpregistry_github_token
+.mcpregistry_registry_token
+
+# Internal Laced Labs workspace marker
+.laced-family

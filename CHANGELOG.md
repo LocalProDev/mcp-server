@@ -2,6 +2,11 @@
 
 All notable changes to the LocalPro MCP Server.
 
+## Maintenance: 2026-06-17
+
+- **Published source synced to the deployed worker.** The repo's `src/` had drifted to an older schema-1.0, 4-niche implementation (and imported an `agents/mcp` dependency that was not in `package.json`). It now mirrors the production worker behind `mcp.localpro.dev`: schema 2.0, the 10-niche allowlist, the `google_data` block on `get_provider`, JSON-LD `LocalBusiness`, credibility + citation blocks, cadence-keyed freshness, and best-effort query logging. No live behavior change — production was already on 2.0 / 10 niches; this aligns the public source with what actually serves.
+- **Discovery metadata corrected.** `/.well-known/llms.txt`, `/.well-known/mcp.json`, `/.well-known/llms-full.txt`, and the tool descriptions now describe the live 10 categories (commercial electrical is served, not excluded) instead of the stale "9 categories." ~7,600 fully-profiled providers served per live `list_niches`.
+
 ## [2.0.1] — 2026-06-12
 
 ### Added
