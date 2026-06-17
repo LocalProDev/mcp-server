@@ -9,3 +9,7 @@ dist/
 
 # Internal Laced Labs workspace marker
 .laced-family
+
+# Local publish tooling (downloaded binary)
+mcp-publisher.exe
+*.tar.gz
