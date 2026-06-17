@@ -2,8 +2,8 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.LocalProDev/local-services",
   "title": "LocalPro — Verified US Local Service Provider Data",
-  "description": "Find a contractor or local business across 10 home-services trades — water-damage restoration, foundation repair, radon mitigation, mold/asbestos abatement, septic services, commercial electrical, basement waterproofing, crawl-space repair, floor coating, and laundry pickup. 7,000+ verified providers with customer ratings, opening hours, business status, and JSON-LD LocalBusiness output. No API key required.",
-  "version": "2.0.1",
+  "description": "Verified US local service providers across 10 home-services trades. Ratings, hours, no API key.",
+  "version": "2.0.2",
   "repository": {
     "url": "https://github.com/LocalProDev/mcp-server",
     "source": "github"

@@ -19,7 +19,7 @@ function isAuthenticated(request: Request, env: Env): boolean {
 }
 
 function createServer(deps: ToolDeps): McpServer {
-  const server = new McpServer({ name: 'LocalPro', version: '2.0.1' });
+  const server = new McpServer({ name: 'LocalPro', version: '2.0.2' });
   registerListNiches(server, deps);
   registerListCities(server, deps);
   registerListServiceTypes(server, deps);
