@@ -2,6 +2,15 @@
 
 All notable changes to the LocalPro MCP Server.
 
+## [2.1.0] — 2026-06-20
+
+### Changed
+- **`get_provider` now returns an owned `google_data.review_summary` (`{ text, source: "localpro_ai" }`) in place of raw `google_data.recent_reviews`.** It is an abstractive "what customers say" summary synthesized from Google reviews — no raw review text and no third-party author PII. Part of the data-independence wean off cached Google data; the raw review bodies have been retired from the serving database.
+- Discovery surfaces (`/.well-known/llms.txt`, `/.well-known/llms-full.txt`, `/.well-known/mcp.json`) and the README updated to describe `review_summary` instead of `recent_reviews`.
+
+### Removed
+- `google_data.recent_reviews` from `get_provider` responses.
+
 ## [2.0.2] — 2026-06-17
 
 - **Published source synced to the deployed worker.** The repo's `src/` had drifted to an older schema-1.0, 4-niche implementation (and imported an `agents/mcp` dependency that was not in `package.json`). It now mirrors the production worker behind `mcp.localpro.dev`: schema 2.0, the 10-niche allowlist, the `google_data` block on `get_provider`, JSON-LD `LocalBusiness`, credibility + citation blocks, cadence-keyed freshness, and best-effort query logging. No live behavior change — production was already on 2.0 / 10 niches; this aligns the public source with what actually serves.

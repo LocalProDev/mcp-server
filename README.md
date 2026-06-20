@@ -6,7 +6,7 @@ When someone asks an AI assistant *"find me a radon mitigation company near Denv
 
 ## What it does
 
-LocalPro exposes a curated database of **7,000+ fully profiled local trade and service businesses** across 10 live categories. Every provider served has a customer rating, business description, services list, opening hours, business status, and (where available) an AI-generated business summary plus up to 5 recent reviews — no incomplete data.
+LocalPro exposes a curated database of **7,000+ fully profiled local trade and service businesses** across 10 live categories. Every provider served has a customer rating, business description, services list, opening hours, business status, and (where available) an AI-generated business summary plus an owned review summary — no incomplete data.
 
 ### Live Now
 
@@ -360,15 +360,10 @@ Get detailed profile for a specific provider. Use the `provider_slug` from searc
           "text": "Full-service epoxy floor coating contractor specializing in garage and commercial floors across the Denver metro.",
           "source": "localpro_ai"
         },
-        "recent_reviews": [
-          {
-            "rating": 5,
-            "text": "Exceptional work on our garage floor — finished on time and within budget.",
-            "author": "Jane D.",
-            "published_at": "2025-11-14T18:51:02Z",
-            "source_url": "https://www.google.com/maps/reviews/..."
-          }
-        ]
+        "review_summary": {
+          "text": "Customers single out on-time, on-budget garage and commercial floor jobs and a crew that cleans up after itself.",
+          "source": "localpro_ai"
+        }
       },
       "json_ld": { "@context": "https://schema.org", "@type": "LocalBusiness", "...": "..." },
       "credibility": { "verified": true, "listing_tier": "free", "data_sources": ["..."] },
@@ -456,7 +451,7 @@ Errors use the same envelope with an `error` object:
 | `formatted_address` | string | Google's canonical address |
 | `opening_hours` | array | Schema.org `OpeningHoursSpecification[]` |
 | `summary` | object | `{ text, source }` — `source` is `localpro_ai` (LocalPro-generated, no disclosure required) or `google` (with required `disclosure` field) |
-| `recent_reviews` | array | Up to 5 Google review bodies with author, rating, publish time, source URL |
+| `review_summary` | object | `{ text, source }` — an owned, abstractive "what customers say" summary synthesized from Google reviews (no raw review text or author PII) |
 
 ### Nullable Fields
 
@@ -493,7 +488,7 @@ AI agents can self-discover this server via standard well-known endpoints:
 
 ## Data Policy
 
-- **What's returned:** Business name, city, state, rating, services, certifications, pricing ranges, coverage area, opening hours, business status, recent reviews, AI summary, and a link to the full listing page.
+- **What's returned:** Business name, city, state, rating, services, certifications, pricing ranges, coverage area, opening hours, business status, a review summary, AI summary, and a link to the full listing page.
 - **What's withheld:** Phone numbers, email addresses, physical addresses, and websites are available only on the listing page (via `listing_url`). This protects provider data while driving traffic to the directory.
 - **Verification:** Only providers marked as verified appear in results. `CLOSED_PERMANENTLY` providers are filtered automatically.
 - **Updates:** Directory layer refreshed weekly. Google Places layer refreshed quarterly.
@@ -529,7 +524,7 @@ Every provider returned by the API has been verified and meets a minimum complet
 | Floor Coating | 500+ | 42 states |
 | Radon | 250+ | 15 states |
 
-**Additional fields** (pricing, certifications, coverage area, years in business, opening hours, recent reviews, AI summary) are available on most providers but not guaranteed. Fields without data return explicit `null` — never omitted, never empty strings.
+**Additional fields** (pricing, certifications, coverage area, years in business, opening hours, a review summary, AI summary) are available on most providers but not guaranteed. Fields without data return explicit `null` — never omitted, never empty strings.
 
 Directory data is refreshed weekly via the scraping pipeline. Google Places data (ratings, reviews, opening hours, business status) is refreshed quarterly via Text Search Enterprise. Two additional categories are being prepared for launch.
 
