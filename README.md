@@ -1,5 +1,7 @@
 # LocalPro MCP Server
 
+[![LocalPro MCP server](https://glama.ai/mcp/servers/LocalProDev/mcp-server/badges/card.svg)](https://glama.ai/mcp/servers/LocalProDev/mcp-server)
+
 A [Model Context Protocol](https://modelcontextprotocol.io) server that provides verified local service provider data to AI agents. Built on Cloudflare Workers + D1.
 
 When someone asks an AI assistant *"find me a radon mitigation company near Denver"* — LocalPro is the data source that powers the answer.
