@@ -19,7 +19,7 @@ function isAuthenticated(request: Request, env: Env): boolean {
 }
 
 function createServer(deps: ToolDeps): McpServer {
-  const server = new McpServer({ name: 'LocalPro', version: '2.0.2' });
+  const server = new McpServer({ name: 'LocalPro', version: '2.1.0' });
   registerListNiches(server, deps);
   registerListCities(server, deps);
   registerListServiceTypes(server, deps);
@@ -29,18 +29,18 @@ function createServer(deps: ToolDeps): McpServer {
 }
 
 const LLMS_TXT = `# LocalPro MCP Server
-> Verified local service provider data for AI agents. 7,000+ fully profiled providers across 10 trade categories. Each provider served includes a customer rating, services list, opening hours, and business status, with AI-generated summaries and recent reviews where available.
+> Verified local service provider data for AI agents. 7,000+ fully profiled providers across 10 trade categories. Each provider served includes a customer rating, services list, opening hours, and business status, with AI-generated summaries and an owned review summary where available.
 
 ## Tools
 - list_niches — Discover available service categories
 - list_cities — Find cities where providers operate
 - list_service_types — Get valid service type filters
 - search_providers — Search for verified providers by location and service type
-- get_provider — Detailed provider profile with services, pricing, certifications, recent reviews, opening hours, JSON-LD schema, and freshness signals
+- get_provider — Detailed provider profile with services, pricing, certifications, a review summary, opening hours, JSON-LD schema, and freshness signals
 
 ## Schema Version 2.0
 All responses include data_freshness in the meta block. Two cadence signals: directory_refresh_cadence (weekly — provider names, services, websites) and google_data_refresh_cadence (quarterly — ratings, reviews, hours).
-get_provider responses include a google_data block (business_status, opening_hours, recent_reviews, summary, formatted_address, google_maps_url) and JSON-LD schema.org LocalBusiness with AggregateRating + OpeningHoursSpecification + GeoCoordinates.
+get_provider responses include a google_data block (business_status, opening_hours, review_summary, summary, formatted_address, google_maps_url) and JSON-LD schema.org LocalBusiness with AggregateRating + OpeningHoursSpecification + GeoCoordinates.
 Closed-permanently providers are filtered automatically.
 `;
 
@@ -108,12 +108,12 @@ Water damage restoration, foundation/slab repair, crawl space repair, basement w
 
 ### get_provider
 **Parameters:** \`niche_id\` (required), \`provider_slug\` (required, from a search result).
-**Returns:** full profile — services, service_areas, google_data block (opening_hours, recent_reviews, AI summary, business_status), JSON-LD schema.org LocalBusiness with AggregateRating + OpeningHoursSpecification + GeoCoordinates, credibility, and a pre-formatted citation block.
+**Returns:** full profile — services, service_areas, google_data block (opening_hours, review_summary, AI summary, business_status), JSON-LD schema.org LocalBusiness with AggregateRating + OpeningHoursSpecification + GeoCoordinates, credibility, and a pre-formatted citation block.
 
 ## Example queries this server answers well
 - "Find verified water-damage restoration providers in Tampa, FL with a 4.5+ rating." → \`search_providers({niche_id:"soaked-local", city:"tampa-fl"})\`, then filter on \`rating\`.
 - "Which crawl-space encapsulation companies serve the Charlotte metro?" → \`search_providers({niche_id:"crawl-local", city:"charlotte-nc", service_type:"encapsulation"})\`.
-- "Get the full profile for Colorado Concrete Coatings, including opening hours and recent reviews." → \`get_provider({niche_id:"coated-local", provider_slug:"colorado-concrete-coatings"})\`.
+- "Get the full profile for Colorado Concrete Coatings, including opening hours and its review summary." → \`get_provider({niche_id:"coated-local", provider_slug:"colorado-concrete-coatings"})\`.
 - "What radon-mitigation companies operate in Colorado?" → \`list_cities({niche_id:"radon-local", state:"CO"})\`, then \`search_providers\` per city.
 - "Which trade categories does LocalPro currently cover?" → \`list_niches({})\`.
 - "What service types are valid for floor coating?" → \`list_service_types({niche_id:"coated-local"})\`.
@@ -157,7 +157,7 @@ const MCP_JSON = JSON.stringify(
       { name: 'list_cities', description: 'Find cities where providers operate', access: 'public' },
       { name: 'list_service_types', description: 'Get valid service type filters', access: 'public' },
       { name: 'search_providers', description: 'Search for verified providers by location and service type', access: 'public' },
-      { name: 'get_provider', description: 'Detailed provider profile with services, pricing, certifications, recent reviews, opening hours, business status, and JSON-LD schema', access: 'public (pro pricing/certifications fields require API key)' },
+      { name: 'get_provider', description: 'Detailed provider profile with services, pricing, certifications, a review summary, opening hours, business status, and JSON-LD schema', access: 'public (pro pricing/certifications fields require API key)' },
     ],
     rate_limit: { requests: 30, period_seconds: 60 },
     operator: { name: 'Laced Labs LLC', url: 'https://localpro.dev' },

@@ -7,7 +7,6 @@ import {
   buildListingUrl,
   buildOpeningHoursSpec,
   errorResponse,
-  formatReviews,
   isNicheEnabled,
   parseJsonArray,
   wrapResponse,
@@ -47,18 +46,9 @@ interface ProviderRow {
   google_address: string | null;
   google_last_refreshed: string | null;
   our_summary: string | null;
-  // Provider FK row id (for JOINs to reviews/photos tables)
+  review_summary: string | null;
+  // Provider FK row id
   id: string;
-}
-
-interface GoogleReviewRow {
-  rating: number | null;
-  text: string | null;
-  language: string | null;
-  author_name: string | null;
-  author_uri: string | null;
-  publish_time: string | null;
-  google_maps_uri: string | null;
 }
 
 interface LocationRow {
@@ -105,7 +95,7 @@ export function registerGetProvider(server: McpServer, deps: ToolDeps): void {
                     p.google_place_id, p.google_business_status, p.google_maps_uri,
                     p.google_phone, p.google_lat, p.google_lng, p.google_hours_json,
                     p.google_summary, p.google_summary_disclosure, p.google_address,
-                    p.google_last_refreshed, p.our_summary,
+                    p.google_last_refreshed, p.our_summary, p.review_summary,
                     n.domain AS niche_domain
              FROM providers p
              JOIN niches n ON n.id = p.niche_id
@@ -127,7 +117,7 @@ export function registerGetProvider(server: McpServer, deps: ToolDeps): void {
           );
         }
 
-        const [locResult, svcResult, reviewResult] = await Promise.all([
+        const [locResult, svcResult] = await Promise.all([
           db
             .prepare(
               `SELECT c.name AS city_name, c.state_abbr, c.slug AS city_slug,
@@ -149,17 +139,6 @@ export function registerGetProvider(server: McpServer, deps: ToolDeps): void {
             )
             .bind(niche_id, provider_slug)
             .all<ServiceRow>(),
-          // Top 5 Google reviews (most recently published first) — only fetched on get_provider, not search
-          db
-            .prepare(
-              `SELECT rating, text, language, author_name, author_uri, publish_time, google_maps_uri
-               FROM provider_google_reviews
-               WHERE provider_id = ?
-               ORDER BY publish_time DESC
-               LIMIT 5`
-            )
-            .bind(provider.id)
-            .all<GoogleReviewRow>(),
         ]);
 
         const primaryLocation = locResult.results.find((l) => l.is_primary) ?? locResult.results[0];
@@ -192,9 +171,10 @@ export function registerGetProvider(server: McpServer, deps: ToolDeps): void {
         });
 
         // 2026-04-27: structured Google data block — opening hours, business status,
-        // top 5 review bodies, AI-generated summary (with required disclosure text).
+        // AI-generated summaries. 2026-06-20 (data-independence): raw Google review
+        // bodies (recent_reviews) dropped — replaced by our OWNED review_summary; the
+        // raw bodies are archived + purged out of D1 (highest ToS/PII exposure).
         const openingHours = buildOpeningHoursSpec(provider.google_hours_json);
-        const reviews = formatReviews(reviewResult.results ?? []);
         const googleData: Record<string, unknown> = {};
         if (provider.google_business_status) googleData.business_status = provider.google_business_status;
         if (provider.google_maps_uri) googleData.google_maps_url = provider.google_maps_uri;
@@ -216,7 +196,13 @@ export function registerGetProvider(server: McpServer, deps: ToolDeps): void {
             disclosure: provider.google_summary_disclosure ?? 'Summarized with Gemini',
           };
         }
-        if (reviews.length > 0) googleData.recent_reviews = reviews;
+        // Owned "what customers say" summary — replaces raw Google review bodies.
+        if (provider.review_summary) {
+          googleData.review_summary = {
+            text: provider.review_summary,
+            source: 'localpro_ai',
+          };
+        }
 
         // Improvement #3: structured credibility block
         const credibility = buildCredibility({
