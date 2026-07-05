@@ -8,22 +8,22 @@ When someone asks an AI assistant *"find me a radon mitigation company near Denv
 
 ## What it does
 
-LocalPro exposes a curated database of **7,000+ fully profiled local trade and service businesses** across 10 live categories. Every provider served has a customer rating, business description, services list, opening hours, business status, and (where available) an AI-generated business summary plus an owned review summary — no incomplete data.
+LocalPro exposes a curated database of **9,000+ fully profiled local trade and service businesses** across 10 live categories. Every provider served has a customer rating, business description, services list, opening hours, business status, and (where available) an AI-generated business summary plus an owned review summary — no incomplete data.
 
 ### Live Now
 
 | Category | Niche ID | Providers | Example Services |
 |----------|----------|-----------|-----------------|
+| Water Damage Restoration | `soaked-local` | 1,900+ | Flood cleanup, mold remediation, structural drying |
+| Commercial Electrical | `hire-electrical` | 1,200+ | Commercial & industrial wiring, service upgrades, maintenance |
 | Foundation Repair | `slab-local` | 1,050+ | Pier installation, mudjacking, foam injection, leveling |
 | Crawl Space Repair | `crawl-local` | 1,025+ | Encapsulation, vapor barrier, structural repair, waterproofing |
-| Water Damage Restoration | `soaked-local` | 950+ | Flood cleanup, mold remediation, structural drying |
 | Mold & Asbestos | `abate-local` | 950+ | Mold, asbestos, lead paint remediation |
-| Septic Services | `pump-local` | 875+ | Pumping, inspection, drain field repair |
-| Commercial Electrical | `hire-electrical` | 850+ | Commercial & industrial wiring, service upgrades, maintenance |
+| Septic Services | `pump-local` | 850+ | Pumping, inspection, drain field repair |
 | Basement Waterproofing | `basement-local` | 600+ | Interior/exterior waterproofing, drainage, sump pumps |
 | Laundry Services | `suds-local` | 550+ | Wash & fold, dry cleaning, pickup & delivery |
 | Floor Coating | `coated-local` | 525+ | Epoxy, polyaspartic, metallic, flake, concrete polishing |
-| Radon | `radon-local` | 300+ | Testing, mitigation, sub-slab depressurization |
+| Radon | `radon-local` | 250+ | Testing, mitigation, sub-slab depressurization |
 
 ### Coming Soon
 

@@ -2,7 +2,10 @@
 
 All notable changes to the LocalPro MCP Server.
 
-## [2.1.0] — 2026-06-20
+## Maintenance: 2026-07-05
+
+- **Liveness verified.** `list_niches` on `https://mcp.localpro.dev/mcp` returns the schema-2.0 manifest; server healthy, no behavior change. `scraped_at` fresh (2026-07-05).
+- **README counts reconciled to live `list_niches` (9,167 served across 10 niches).** Two niches had grown well past their floors — `soaked-local` 950+ → 1,900+, `hire-electrical` 850+ → 1,200+ — and the headline floor was lifted 7,000+ → 9,000+ (still a durable floor under the live 9,167). Two floors were *overstated* and corrected down for accuracy: `radon-local` 300+ → 250+ (live 272), `pump-local` 875+ → 850+ (live 864).
 
 ### Changed
 - **`get_provider` now returns an owned `google_data.review_summary` (`{ text, source: "localpro_ai" }`) in place of raw `google_data.recent_reviews`.** It is an abstractive "what customers say" summary synthesized from Google reviews — no raw review text and no third-party author PII. Part of the data-independence wean off cached Google data; the raw review bodies have been retired from the serving database.
