@@ -17,7 +17,7 @@ LocalPro exposes a curated database of **9,000+ fully profiled local trade and s
 | Water Damage Restoration | `soaked-local` | 1,900+ | Flood cleanup, mold remediation, structural drying |
 | Commercial Electrical | `hire-electrical` | 1,200+ | Commercial & industrial wiring, service upgrades, maintenance |
 | Foundation Repair | `slab-local` | 1,050+ | Pier installation, mudjacking, foam injection, leveling |
-| Crawl Space Repair | `crawl-local` | 1,025+ | Encapsulation, vapor barrier, structural repair, waterproofing |
+| Crawl Space Repair | `crawl-local` | 1,000+ | Encapsulation, vapor barrier, structural repair, waterproofing |
 | Mold & Asbestos | `abate-local` | 950+ | Mold, asbestos, lead paint remediation |
 | Septic Services | `pump-local` | 850+ | Pumping, inspection, drain field repair |
 | Basement Waterproofing | `basement-local` | 600+ | Interior/exterior waterproofing, drainage, sump pumps |

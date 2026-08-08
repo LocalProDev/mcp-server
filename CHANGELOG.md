@@ -2,6 +2,11 @@
 
 All notable changes to the LocalPro MCP Server.
 
+## Maintenance: 2026-08-08
+
+- **Liveness verified.** `list_niches` on `https://mcp.localpro.dev/mcp` returns the schema-2.0 manifest; server healthy, no behavior change. **9,180 fully-profiled providers served across 10 niches** (up from 9,167 at the last check).
+- **One README floor corrected for accuracy:** `crawl-local` 1,025+ → 1,000+ (live count 1,020 had slipped under the stated floor). All other per-niche floors verified against live `list_niches` and hold.
+
 ## Maintenance: 2026-07-05
 
 - **Liveness verified.** `list_niches` on `https://mcp.localpro.dev/mcp` returns the schema-2.0 manifest; server healthy, no behavior change. `scraped_at` fresh (2026-07-05).
