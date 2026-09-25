@@ -5,10 +5,12 @@ import {
   buildCredibility,
   buildJsonLd,
   buildListingUrl,
-  buildOpeningHoursSpec,
+  buildRating,
   errorResponse,
   isNicheEnabled,
+  OWNED_REVIEW_COUNT_SQL,
   parseJsonArray,
+  SERVED_PROVIDER_FILTER,
   wrapResponse,
 } from '../lib/response.js';
 import { getServiceLabel } from '../lib/service-labels.js';
@@ -20,8 +22,10 @@ interface ProviderRow {
   niche_id: string;
   description: string | null;
   listing_tier: string | null;
-  google_rating: number | null;
-  google_review_count: number | null;
+  phone: string | null;
+  rating_tier: string | null;
+  rating_star: number | null;
+  owned_review_count: number | null;
   enriched_services: string | null;
   enriched_pricing: string | null;
   enriched_certifications: string | null;
@@ -32,19 +36,6 @@ interface ProviderRow {
   // Freshness + credibility columns (improvement #1 + #3)
   updated_at: string | null;
   claimed_at: string | null;
-  source: string | null;
-  // Google Places (New) Text Search Enterprise capture (2026-04-26 schema migration)
-  google_place_id: string | null;
-  google_business_status: string | null;
-  google_maps_uri: string | null;
-  google_phone: string | null;
-  google_lat: number | null;
-  google_lng: number | null;
-  google_hours_json: string | null;
-  google_summary: string | null;
-  google_summary_disclosure: string | null;
-  google_address: string | null;
-  google_last_refreshed: string | null;
   our_summary: string | null;
   review_summary: string | null;
   // Provider FK row id
@@ -87,24 +78,20 @@ export function registerGetProvider(server: McpServer, deps: ToolDeps): void {
         const provider = await db
           .prepare(
             `SELECT p.id, p.name, p.slug, p.niche_id, p.description, p.listing_tier,
-                    p.google_rating, p.google_review_count,
+                    p.phone,
+                    pr.confidence AS rating_tier, pr.star AS rating_star,
+                    ${OWNED_REVIEW_COUNT_SQL} AS owned_review_count,
                     p.enriched_services, p.enriched_pricing,
                     p.enriched_certifications, p.enriched_coverage,
                     p.enriched_years, p.year_established,
-                    p.updated_at, p.claimed_at, p.source,
-                    p.google_place_id, p.google_business_status, p.google_maps_uri,
-                    p.google_phone, p.google_lat, p.google_lng, p.google_hours_json,
-                    p.google_summary, p.google_summary_disclosure, p.google_address,
-                    p.google_last_refreshed, p.our_summary, p.review_summary,
+                    p.updated_at, p.claimed_at,
+                    p.our_summary, p.review_summary,
                     n.domain AS niche_domain
              FROM providers p
+             JOIN provider_ratings pr ON pr.provider_id = p.id
              JOIN niches n ON n.id = p.niche_id
              WHERE p.niche_id = ? AND p.slug = ?
-               AND p.verified = 1 AND p.review_status = 'approved'
-               AND p.google_rating IS NOT NULL
-               AND p.description IS NOT NULL AND length(p.description) > 5
-               AND p.enriched_services IS NOT NULL AND p.enriched_services != '[]'
-               AND (p.google_business_status IS NULL OR p.google_business_status != 'CLOSED_PERMANENTLY')`
+               AND ${SERVED_PROVIDER_FILTER}`
           )
           .bind(niche_id, provider_slug)
           .first<ProviderRow>();
@@ -150,67 +137,24 @@ export function registerGetProvider(server: McpServer, deps: ToolDeps): void {
           ? buildListingUrl(provider.niche_domain, citySlug, provider.slug)
           : `https://${provider.niche_domain}/`;
 
-        // Improvement #2: JSON-LD schema.org LocalBusiness — now includes
-        // Google's canonical address, geo coords, telephone, opening hours,
-        // business status, and Google Maps URL (sameAs).
         const json_ld = buildJsonLd({
           name: provider.name,
           description: provider.description,
-          google_rating: provider.google_rating,
-          google_review_count: provider.google_review_count,
-          google_address: provider.google_address,
-          google_lat: provider.google_lat,
-          google_lng: provider.google_lng,
-          google_phone: provider.google_phone,
-          google_hours_json: provider.google_hours_json,
-          google_business_status: provider.google_business_status,
-          google_maps_uri: provider.google_maps_uri,
+          phone: provider.phone,
+          rating_star: provider.rating_star,
+          owned_review_count: provider.owned_review_count,
           city_name: primaryLocation?.city_name ?? null,
           state_abbr: primaryLocation?.state_abbr ?? null,
           listing_url: listingUrl,
         });
-
-        // 2026-04-27: structured Google data block — opening hours, business status,
-        // AI-generated summaries. 2026-06-20 (data-independence): raw Google review
-        // bodies (recent_reviews) dropped — replaced by our OWNED review_summary; the
-        // raw bodies are archived + purged out of D1 (highest ToS/PII exposure).
-        const openingHours = buildOpeningHoursSpec(provider.google_hours_json);
-        const googleData: Record<string, unknown> = {};
-        if (provider.google_business_status) googleData.business_status = provider.google_business_status;
-        if (provider.google_maps_uri) googleData.google_maps_url = provider.google_maps_uri;
-        if (provider.google_address) googleData.formatted_address = provider.google_address;
-        if (openingHours && openingHours.length > 0) googleData.opening_hours = openingHours;
-        // Surface a single canonical AI summary, with our_summary preferred over
-        // Google's. our_summary is generated from existing fields and doesn't
-        // require Google's "Summarized with Gemini" disclosure. Google's only
-        // surfaces if we don't have our own AND it's present.
-        if (provider.our_summary) {
-          googleData.summary = {
-            text: provider.our_summary,
-            source: 'localpro_ai',
-          };
-        } else if (provider.google_summary) {
-          googleData.summary = {
-            text: provider.google_summary,
-            source: 'google',
-            disclosure: provider.google_summary_disclosure ?? 'Summarized with Gemini',
-          };
-        }
-        // Owned "what customers say" summary — replaces raw Google review bodies.
-        if (provider.review_summary) {
-          googleData.review_summary = {
-            text: provider.review_summary,
-            source: 'localpro_ai',
-          };
-        }
 
         // Improvement #3: structured credibility block
         const credibility = buildCredibility({
           listing_tier: provider.listing_tier,
           claimed_at: provider.claimed_at,
           updated_at: provider.updated_at,
-          source: provider.source,
           enriched_services: provider.enriched_services,
+          owned_review_count: provider.owned_review_count,
         });
 
         // Improvement #4: pre-formatted citation fields
@@ -224,8 +168,10 @@ export function registerGetProvider(server: McpServer, deps: ToolDeps): void {
         const result: Record<string, unknown> = {
           name: provider.name,
           description: provider.description ?? null,
-          rating: provider.google_rating ?? null,
-          review_count: provider.google_review_count ?? null,
+          rating: buildRating(provider),
+          // LocalPro-written summaries: an overview of the business, and what its customers say.
+          ...(provider.our_summary ? { summary: provider.our_summary } : {}),
+          ...(provider.review_summary ? { review_summary: provider.review_summary } : {}),
           years_in_business: provider.enriched_years ?? provider.year_established ?? null,
           services: rawServices.map((s) => ({
             type: s,
@@ -254,8 +200,6 @@ export function registerGetProvider(server: McpServer, deps: ToolDeps): void {
             turnaround: s.turnaround ?? null,
           })),
           listing_url: listingUrl,
-          // 2026-04-27: Google Places (New) structured data block
-          ...(Object.keys(googleData).length > 0 ? { google_data: googleData } : {}),
           // Improvement #2: JSON-LD for AI semantic parsing
           json_ld,
           // Improvement #3: credibility block
@@ -275,8 +219,7 @@ export function registerGetProvider(server: McpServer, deps: ToolDeps): void {
               text: wrapResponse({
                 results: [result],
                 niche_id,
-                scraped_at: provider.updated_at,
-                google_refreshed_at: provider.google_last_refreshed,
+                last_verified_at: provider.updated_at,
               }),
             },
           ],

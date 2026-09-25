@@ -1,5 +1,12 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { errorResponse, nicheBindValues, nicheInClause, wrapResponse } from '../lib/response.js';
+import {
+  errorResponse,
+  latest,
+  nicheBindValues,
+  nicheInClause,
+  SERVED_PROVIDER_FILTER,
+  wrapResponse,
+} from '../lib/response.js';
 import { logQuery, type ToolDeps } from '../lib/query-log.js';
 
 export function registerListNiches(server: McpServer, deps: ToolDeps): void {
@@ -13,20 +20,17 @@ export function registerListNiches(server: McpServer, deps: ToolDeps): void {
       try {
         // provider_count is aligned to search_providers' filter set: requires a
         // provider_locations + cities row (search_providers JOINs them), excludes
-        // CLOSED_PERMANENTLY, and applies the same completeness gate (rating + desc
-        // + enriched_services). Mismatched counts here would let an AI agent see N
+        // closed businesses, and applies the same completeness gate via
+        // SERVED_PROVIDER_FILTER. Mismatched counts here would let an AI agent see N
         // providers in list_niches and get fewer than N from search_providers.
         const { results } = await db
           .prepare(
             `SELECT n.id, n.name, n.slug, n.domain,
                     (SELECT COUNT(*)
                      FROM providers p
+                     JOIN provider_ratings pr ON pr.provider_id = p.id
                      WHERE p.niche_id = n.id
-                       AND p.verified = 1 AND p.review_status = 'approved'
-                       AND p.google_rating IS NOT NULL
-                       AND p.description IS NOT NULL AND length(p.description) > 5
-                       AND p.enriched_services IS NOT NULL AND p.enriched_services != '[]'
-                       AND (p.google_business_status IS NULL OR p.google_business_status != 'CLOSED_PERMANENTLY')
+                       AND ${SERVED_PROVIDER_FILTER}
                        AND EXISTS (
                          SELECT 1 FROM provider_locations pl
                          JOIN cities c ON c.id = pl.city_id
@@ -51,12 +55,6 @@ export function registerListNiches(server: McpServer, deps: ToolDeps): void {
           provider_count: r.provider_count,
         }));
 
-        const scraped_at = results.reduce<string | null>((max, r) => {
-          if (!r.last_updated) return max;
-          if (!max) return r.last_updated;
-          return r.last_updated > max ? r.last_updated : max;
-        }, null);
-
         executionCtx.waitUntil(logQuery(db, { toolName: 'list_niches', resultCount: niches.length, startTimeMs }, requestCtx));
         return {
           content: [
@@ -64,7 +62,7 @@ export function registerListNiches(server: McpServer, deps: ToolDeps): void {
               type: 'text',
               text: wrapResponse({
                 results: niches,
-                scraped_at,
+                last_verified_at: latest(results, (r) => r.last_updated),
                 data_note: 'Use niche_id values with search_providers, list_cities, and list_service_types.',
               }),
             },

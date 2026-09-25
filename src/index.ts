@@ -19,7 +19,7 @@ function isAuthenticated(request: Request, env: Env): boolean {
 }
 
 function createServer(deps: ToolDeps): McpServer {
-  const server = new McpServer({ name: 'LocalPro', version: '2.1.0' });
+  const server = new McpServer({ name: 'LocalPro', version: '3.0.0' });
   registerListNiches(server, deps);
   registerListCities(server, deps);
   registerListServiceTypes(server, deps);
@@ -29,19 +29,20 @@ function createServer(deps: ToolDeps): McpServer {
 }
 
 const LLMS_TXT = `# LocalPro MCP Server
-> Verified local service provider data for AI agents. 7,000+ fully profiled providers across 10 trade categories. Each provider served includes a customer rating, services list, opening hours, and business status, with AI-generated summaries and an owned review summary where available.
+> Verified local service provider data for AI agents. 7,000+ fully profiled providers across 10 trade categories. Every provider is verified against the business's own website and carries a LocalPro Rating, a services list, and LocalPro-written summaries.
 
 ## Tools
 - list_niches — Discover available service categories
 - list_cities — Find cities where providers operate
 - list_service_types — Get valid service type filters
 - search_providers — Search for verified providers by location and service type
-- get_provider — Detailed provider profile with services, pricing, certifications, a review summary, opening hours, JSON-LD schema, and freshness signals
+- get_provider — Detailed provider profile with services, pricing, certifications, a review summary, JSON-LD schema, and a last-verified date
 
-## Schema Version 2.0
-All responses include data_freshness in the meta block. Two cadence signals: directory_refresh_cadence (weekly — provider names, services, websites) and google_data_refresh_cadence (quarterly — ratings, reviews, hours).
-get_provider responses include a google_data block (business_status, opening_hours, review_summary, summary, formatted_address, google_maps_url) and JSON-LD schema.org LocalBusiness with AggregateRating + OpeningHoursSpecification + GeoCoordinates.
-Closed-permanently providers are filtered automatically.
+## Schema Version 3.0
+All responses include data_freshness.last_verified_at in the meta block: the most recent date LocalPro verified a record in the response.
+Every provider carries a LocalPro Rating (tier: established / well-reviewed / reviewed; star + review_count appear once backed by first-party customer reviews).
+get_provider responses include LocalPro-written summary and review_summary fields and JSON-LD schema.org LocalBusiness.
+Permanently closed businesses are filtered automatically.
 `;
 
 const LLMS_FULL_TXT = `# LocalPro MCP Server — Extended Reference for AI Agents
@@ -66,7 +67,7 @@ Water damage restoration, foundation/slab repair, crawl space repair, basement w
 **Returns:** array of available niches with provider counts and the directory domain that hosts each.
 \`\`\`json
 {
-  "meta": { "schema_version": "2.0", "total_results": 10, "data_freshness": { "directory_refresh_cadence": "weekly" } },
+  "meta": { "schema_version": "3.0", "total_results": 10, "data_freshness": { "last_verified_at": "2026-09-24T14:02:11Z" } },
   "results": [
     { "niche_id": "slab-local",   "name": "Foundation Repair Contractors", "slug": "foundation-repair", "domain": "slablocal.com", "provider_count": 1033 },
     { "niche_id": "crawl-local",  "name": "Crawl Space Repair Contractors", "slug": "crawl-space-repair", "domain": "crawllocal.com", "provider_count": 1030 },
@@ -79,7 +80,7 @@ Water damage restoration, foundation/slab repair, crawl space repair, basement w
 **Parameters:** \`niche_id\` (required), \`state\` (optional, two-letter abbr).
 **Returns:** cities/metros where the niche has providers, sorted by provider_count.
 \`\`\`json
-{ "meta": { "schema_version": "2.0", "niche": "radon-local" }, "results": [ { "name": "Denver", "state": "CO", "slug": "denver-co", "provider_count": 18 } ] }
+{ "meta": { "schema_version": "3.0", "niche": "radon-local" }, "results": [ { "name": "Denver", "state": "CO", "slug": "denver-co", "provider_count": 18 } ] }
 \`\`\`
 
 ### list_service_types
@@ -91,14 +92,14 @@ Water damage restoration, foundation/slab repair, crawl space repair, basement w
 
 ### search_providers
 **Parameters:** \`niche_id\` (required), \`city\` (optional slug), \`service_type\` (optional slug), \`limit\` (optional 1–25, default 10).
-**Returns:** verified providers with rating, services, business_status, listing_url, and Google maps URL.
+**Returns:** verified providers with LocalPro Rating, services, pricing summary, and listing_url.
 \`\`\`json
 {
-  "meta": { "schema_version": "2.0", "data_freshness": { "directory_refresh_cadence": "weekly", "google_data_refresh_cadence": "quarterly" } },
+  "meta": { "schema_version": "3.0", "data_freshness": { "last_verified_at": "2026-09-24T14:02:11Z" } },
   "results": [
     {
       "name": "Colorado Concrete Coatings", "city": "Denver", "state": "CO",
-      "rating": 4.9, "review_count": 47, "business_status": "OPERATIONAL",
+      "rating": { "tier": "established", "label": "Established" },
       "services": [ { "type": "epoxy", "label": "Epoxy Floor Coating" } ],
       "listing_url": "https://coatedlocal.com/providers/denver-co/colorado-concrete-coatings/"
     }
@@ -108,12 +109,12 @@ Water damage restoration, foundation/slab repair, crawl space repair, basement w
 
 ### get_provider
 **Parameters:** \`niche_id\` (required), \`provider_slug\` (required, from a search result).
-**Returns:** full profile — services, service_areas, google_data block (opening_hours, review_summary, AI summary, business_status), JSON-LD schema.org LocalBusiness with AggregateRating + OpeningHoursSpecification + GeoCoordinates, credibility, and a pre-formatted citation block.
+**Returns:** full profile — services, service_areas, LocalPro Rating, summary + review_summary, JSON-LD schema.org LocalBusiness, credibility, and a pre-formatted citation block.
 
 ## Example queries this server answers well
-- "Find verified water-damage restoration providers in Tampa, FL with a 4.5+ rating." → \`search_providers({niche_id:"soaked-local", city:"tampa-fl"})\`, then filter on \`rating\`.
+- "Find well-established water-damage restoration providers in Tampa, FL." → \`search_providers({niche_id:"soaked-local", city:"tampa-fl"})\`; results are ranked by LocalPro Rating within listing tier.
 - "Which crawl-space encapsulation companies serve the Charlotte metro?" → \`search_providers({niche_id:"crawl-local", city:"charlotte-nc", service_type:"encapsulation"})\`.
-- "Get the full profile for Colorado Concrete Coatings, including opening hours and its review summary." → \`get_provider({niche_id:"coated-local", provider_slug:"colorado-concrete-coatings"})\`.
+- "Get the full profile for Colorado Concrete Coatings, including its services and review summary." → \`get_provider({niche_id:"coated-local", provider_slug:"colorado-concrete-coatings"})\`.
 - "What radon-mitigation companies operate in Colorado?" → \`list_cities({niche_id:"radon-local", state:"CO"})\`, then \`search_providers\` per city.
 - "Which trade categories does LocalPro currently cover?" → \`list_niches({})\`.
 - "What service types are valid for floor coating?" → \`list_service_types({niche_id:"coated-local"})\`.
@@ -124,10 +125,8 @@ Water damage restoration, foundation/slab repair, crawl space repair, basement w
 - **Real-time availability or current pricing quotes.** This is a directory, not a marketplace. Pricing fields are summary ranges, not live quotes.
 - **Closed-permanently providers.** Filtered automatically; they will not appear in \`search_providers\` or \`get_provider\` even if you have the slug.
 
-## Data freshness
-Every response includes a \`data_freshness\` block with two cadence signals:
-- \`directory_refresh_cadence: "weekly"\` — provider name, services, websites, descriptions.
-- \`google_data_refresh_cadence: "quarterly"\` — rating, review count, opening hours, business status, AI summary.
+## Where the data comes from
+LocalPro verifies each business against its own website: services, credentials, and description are read from the source and confirmed before a listing is published. Owners can claim and correct their listing, and customers can leave first-party reviews on the directory. Every response carries \`data_freshness.last_verified_at\`, the most recent verification date among the records returned.
 
 When in doubt, re-call the tool rather than caching responses indefinitely.
 
@@ -148,7 +147,7 @@ const GLAMA_JSON = JSON.stringify(
 
 const MCP_JSON = JSON.stringify(
   {
-    schema_version: '2.0',
+    schema_version: '3.0',
     name: 'LocalPro Provider Directory',
     description:
       'Verified local service provider data for AI agents across 10 home-services categories — water damage restoration, foundation/slab repair, crawl space repair, basement waterproofing, mold/asbestos/lead remediation, radon mitigation, septic services, commercial electrical, floor coating, and laundry pickup & delivery.',
@@ -157,7 +156,7 @@ const MCP_JSON = JSON.stringify(
       { name: 'list_cities', description: 'Find cities where providers operate', access: 'public' },
       { name: 'list_service_types', description: 'Get valid service type filters', access: 'public' },
       { name: 'search_providers', description: 'Search for verified providers by location and service type', access: 'public' },
-      { name: 'get_provider', description: 'Detailed provider profile with services, pricing, certifications, a review summary, opening hours, business status, and JSON-LD schema', access: 'public (pro pricing/certifications fields require API key)' },
+      { name: 'get_provider', description: 'Detailed provider profile with services, pricing, certifications, a LocalPro Rating, a review summary, and JSON-LD schema', access: 'public (pro pricing/certifications fields require API key)' },
     ],
     rate_limit: { requests: 30, period_seconds: 60 },
     operator: { name: 'Laced Labs LLC', url: 'https://localpro.dev' },

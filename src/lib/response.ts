@@ -12,12 +12,11 @@ export function parseJsonArray(val: string | null | undefined): string[] {
   }
 }
 
-export const SCHEMA_VERSION = '2.0';
+export const SCHEMA_VERSION = '3.0';
 
 // Enabled niches — the categories this server serves. Mirrors the production
 // allowlist (config/mcp-niches.json in the LocalPro monorepo). Only providers
-// in these niches that also pass the completeness gate (rating + description +
-// services, business not permanently closed) are returned by any tool. Edit
+// in these niches that also pass the completeness gate (SERVED_PROVIDER_FILTER) are returned by any tool. Edit
 // this list to change which categories are exposed.
 export const ENABLED_NICHES = new Set<string>([
   'coated-local',
@@ -40,6 +39,19 @@ export function nicheBindValues(): string[] {
   return [...ENABLED_NICHES];
 }
 
+/**
+ * The served-provider gate, shared by list_niches / search_providers / get_provider so
+ * counts agree across tools. Requires a LocalPro Rating row (alias `pr`), a real
+ * description, a services list, and excludes permanently closed businesses.
+ */
+export const SERVED_PROVIDER_FILTER = `p.verified = 1 AND p.review_status = 'approved'
+  AND p.description IS NOT NULL AND length(p.description) > 5
+  AND p.enriched_services IS NOT NULL AND p.enriched_services != '[]'
+  AND (p.google_business_status IS NULL OR p.google_business_status != 'CLOSED_PERMANENTLY')`;
+
+/** Published first-party review count for provider alias `p`. */
+export const OWNED_REVIEW_COUNT_SQL = `(SELECT COUNT(*) FROM reviews rv WHERE rv.provider_id = p.id AND rv.status = 'published')`;
+
 export function isNicheEnabled(nicheId: string): boolean {
   return ENABLED_NICHES.has(nicheId);
 }
@@ -48,30 +60,26 @@ interface WrapOptions {
   results: unknown[];
   niche_id?: string;
   data_note?: string;
-  /** ISO timestamp of most recently scraped/updated record in this response */
-  scraped_at?: string | null;
-  /** ISO timestamp of most recent Google Places refresh in this response */
-  google_refreshed_at?: string | null;
+  /** ISO timestamp of the most recently verified record in this response */
+  last_verified_at?: string | null;
+}
+
+/** Latest non-null ISO timestamp in a set of rows. */
+export function latest<T>(rows: T[], pick: (r: T) => string | null | undefined): string | null {
+  return rows.reduce<string | null>((max, r) => {
+    const v = pick(r);
+    return v && (!max || v > max) ? v : max;
+  }, null);
 }
 
 export function wrapResponse(data: WrapOptions): string {
-  // Cadence-keyed freshness signals (per the directory's design principle:
-  // display deliberate cadence, not age). Directory data refreshed weekly on
-  // average via scrapers; Google Places data refreshed quarterly via TSE.
-  const freshness: Record<string, string> = {
-    directory_refresh_cadence: 'weekly',
-    google_data_refresh_cadence: 'quarterly',
-  };
-  if (data.scraped_at) freshness.scraped_at = data.scraped_at;
-  if (data.google_refreshed_at) freshness.google_refreshed_at = data.google_refreshed_at;
-
   return JSON.stringify(
     {
       meta: {
         schema_version: SCHEMA_VERSION,
         total_results: data.results.length,
         niche: data.niche_id ?? null,
-        data_freshness: freshness,
+        data_freshness: { last_verified_at: data.last_verified_at ?? null },
         data_note:
           data.data_note ??
           'Verified providers only. Visit listing_url for full contact details.',
@@ -102,47 +110,39 @@ export function errorResponse(
   };
 }
 
-/** Convert Google Places regularOpeningHours JSON to schema.org OpeningHoursSpecification array.
- * Google's day-of-week is 0=Sunday..6=Saturday (per Places API New). Schema.org uses URL refs.
+/** LocalPro Rating descriptors, matching the directory sites. */
+const RATING_TIER_LABELS: Record<string, string> = {
+  established: 'Established',
+  'well-reviewed': 'Well reviewed',
+  reviewed: 'Reviewed',
+  unrated: 'Not yet rated',
+};
+
+/**
+ * LocalPro Rating block. `tier` is our curve-graded standing within the category;
+ * `star` + `review_count` are present only once first-party reviews back them.
  */
-const SCHEMA_DAYS = [
-  'https://schema.org/Sunday',
-  'https://schema.org/Monday',
-  'https://schema.org/Tuesday',
-  'https://schema.org/Wednesday',
-  'https://schema.org/Thursday',
-  'https://schema.org/Friday',
-  'https://schema.org/Saturday',
-];
-function pad2(n: number): string { return n.toString().padStart(2, '0'); }
-export function buildOpeningHoursSpec(hoursJson: string | null): object[] | null {
-  if (!hoursJson) return null;
-  let hrs: { periods?: Array<{ open?: { day: number; hour: number; minute: number }; close?: { day: number; hour: number; minute: number } }> };
-  try { hrs = JSON.parse(hoursJson); } catch { return null; }
-  if (!Array.isArray(hrs.periods)) return null;
-  return hrs.periods
-    .filter((p) => p.open && p.close)
-    .map((p) => ({
-      '@type': 'OpeningHoursSpecification',
-      dayOfWeek: SCHEMA_DAYS[p.open!.day],
-      opens: `${pad2(p.open!.hour)}:${pad2(p.open!.minute)}`,
-      closes: `${pad2(p.close!.hour)}:${pad2(p.close!.minute)}`,
-    }));
+export function buildRating(r: {
+  rating_tier: string | null;
+  rating_star: number | null;
+  owned_review_count: number | null;
+}): object {
+  const tier = r.rating_tier ?? 'unrated';
+  const hasReviews = r.rating_star != null && (r.owned_review_count ?? 0) > 0;
+  return {
+    tier,
+    label: RATING_TIER_LABELS[tier] ?? tier,
+    ...(hasReviews ? { star: r.rating_star, review_count: r.owned_review_count } : {}),
+  };
 }
 
 /** Build a JSON-LD LocalBusiness object for schema.org */
 export function buildJsonLd(provider: {
   name: string;
   description: string | null;
-  google_rating: number | null;
-  google_review_count: number | null;
-  google_address: string | null;
-  google_lat: number | null;
-  google_lng: number | null;
-  google_phone: string | null;
-  google_hours_json: string | null;
-  google_business_status: string | null;
-  google_maps_uri: string | null;
+  phone: string | null;
+  rating_star: number | null;
+  owned_review_count: number | null;
   city_name: string | null;
   state_abbr: string | null;
   listing_url: string;
@@ -154,10 +154,7 @@ export function buildJsonLd(provider: {
     url: provider.listing_url,
   };
   if (provider.description) ld.description = provider.description;
-  // Prefer Google's canonical formattedAddress when present; fall back to city/state.
-  if (provider.google_address) {
-    ld.address = provider.google_address;
-  } else if (provider.city_name || provider.state_abbr) {
+  if (provider.city_name || provider.state_abbr) {
     ld.address = {
       '@type': 'PostalAddress',
       ...(provider.city_name ? { addressLocality: provider.city_name } : {}),
@@ -165,58 +162,18 @@ export function buildJsonLd(provider: {
       addressCountry: 'US',
     };
   }
-  if (provider.google_lat != null && provider.google_lng != null) {
-    ld.geo = {
-      '@type': 'GeoCoordinates',
-      latitude: provider.google_lat,
-      longitude: provider.google_lng,
-    };
-  }
-  if (provider.google_phone) ld.telephone = provider.google_phone;
-  if (provider.google_rating != null && provider.google_review_count != null) {
+  if (provider.phone) ld.telephone = provider.phone;
+  // Only first-party reviews back an AggregateRating.
+  if (provider.rating_star != null && (provider.owned_review_count ?? 0) > 0) {
     ld.aggregateRating = {
       '@type': 'AggregateRating',
-      ratingValue: provider.google_rating,
-      reviewCount: provider.google_review_count,
+      ratingValue: provider.rating_star,
+      reviewCount: provider.owned_review_count,
       bestRating: 5,
       worstRating: 1,
     };
   }
-  const hours = buildOpeningHoursSpec(provider.google_hours_json);
-  if (hours && hours.length > 0) {
-    ld.openingHoursSpecification = hours;
-  }
-  if (provider.google_business_status === 'CLOSED_TEMPORARILY' || provider.google_business_status === 'CLOSED_PERMANENTLY') {
-    ld.specialAnnouncement = provider.google_business_status;
-  }
-  if (provider.google_maps_uri) {
-    ld.sameAs = [provider.google_maps_uri];
-  }
   return ld;
-}
-
-/** Format Google reviews row set into schema.org Review array */
-interface GoogleReviewRow {
-  rating: number | null;
-  text: string | null;
-  language: string | null;
-  author_name: string | null;
-  author_uri: string | null;
-  publish_time: string | null;
-  google_maps_uri: string | null;
-}
-export function formatReviews(rows: GoogleReviewRow[]): object[] {
-  return rows
-    .filter((r) => r.text && r.rating)
-    .map((r) => ({
-      rating: r.rating,
-      text: r.text,
-      ...(r.language ? { language: r.language } : {}),
-      author: r.author_name ?? null,
-      ...(r.author_uri ? { author_uri: r.author_uri } : {}),
-      published_at: r.publish_time ?? null,
-      ...(r.google_maps_uri ? { source_url: r.google_maps_uri } : {}),
-    }));
 }
 
 /** Build pre-formatted citation fields so LLMs can cite providers directly */
@@ -238,23 +195,21 @@ export function buildCredibility(provider: {
   listing_tier: string | null;
   claimed_at: string | null;
   updated_at: string | null;
-  source: string | null;
   enriched_services: string | null;
+  owned_review_count: number | null;
 }): object {
   const sources: string[] = [];
-  if (provider.source) sources.push(provider.source);
   if (provider.enriched_services && provider.enriched_services !== '[]') {
-    sources.push('website_enrichment');
+    sources.push('business_website');
   }
   const tier = provider.listing_tier ?? 'free';
-  if (['claimed', 'featured', 'premium', 'pro'].includes(tier)) {
-    sources.push('claimed');
-  }
+  if (['claimed', 'featured', 'pro'].includes(tier)) sources.push('owner_verified');
+  if ((provider.owned_review_count ?? 0) > 0) sources.push('customer_reviews');
 
   return {
     verified: true,
     listing_tier: tier,
     verification_date: provider.claimed_at ?? provider.updated_at ?? null,
-    data_sources: [...new Set(sources)],
+    data_sources: sources,
   };
 }

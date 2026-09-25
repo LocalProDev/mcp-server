@@ -8,7 +8,9 @@ When someone asks an AI assistant *"find me a radon mitigation company near Denv
 
 ## What it does
 
-LocalPro exposes a curated database of **9,000+ fully profiled local trade and service businesses** across 10 live categories. Every provider served has a customer rating, business description, services list, opening hours, business status, and (where available) an AI-generated business summary plus an owned review summary — no incomplete data.
+LocalPro exposes a curated database of **9,000+ fully profiled local trade and service businesses** across 10 live categories. Every provider is verified against the business's own website before it is served, and carries a LocalPro Rating, a business description, and a services list, plus (where available) LocalPro-written business and review summaries. No incomplete profiles.
+
+All data is LocalPro-owned: collected and verified by us, corrected by business owners who claim their listing, and increasingly backed by first-party customer reviews left on the directories themselves.
 
 ### Live Now
 
@@ -30,7 +32,7 @@ LocalPro exposes a curated database of **9,000+ fully profiled local trade and s
 | Category | Niche ID | Status |
 |----------|----------|--------|
 | Chimney Services | `chimney-local` | Live provider data; description + service enrichment in progress |
-| Well Water Services | `wellwater-local` | Pre-pipeline (560 providers scraped, county-based model) |
+| Well Water Services | `wellwater-local` | Provider data in preparation (county-based model) |
 
 ## Quick Start
 
@@ -160,13 +162,11 @@ Discover available service directories. Call this first.
 ```json
 {
   "meta": {
-    "schema_version": "2.0",
+    "schema_version": "3.0",
     "total_results": 10,
     "niche": null,
     "data_freshness": {
-      "directory_refresh_cadence": "weekly",
-      "google_data_refresh_cadence": "quarterly",
-      "scraped_at": "2026-04-27T13:57:21Z"
+      "last_verified_at": "2026-09-22 12:57:07"
     },
     "data_note": "Use niche_id values with search_providers, list_cities, and list_service_types."
   },
@@ -268,14 +268,11 @@ Search for verified providers by location, service type, and trade category.
 ```json
 {
   "meta": {
-    "schema_version": "2.0",
+    "schema_version": "3.0",
     "total_results": 3,
     "niche": "coated-local",
     "data_freshness": {
-      "directory_refresh_cadence": "weekly",
-      "google_data_refresh_cadence": "quarterly",
-      "scraped_at": "2026-04-27T03:03:10Z",
-      "google_refreshed_at": "2026-04-27T04:53:51Z"
+      "last_verified_at": "2026-09-18 09:41:02"
     },
     "data_note": "Verified providers only. Visit listing_url for full contact details."
   },
@@ -285,10 +282,7 @@ Search for verified providers by location, service type, and trade category.
       "description": "Full-service garage floor coating company serving the Denver metro.",
       "city": "Denver",
       "state": "CO",
-      "rating": 4.9,
-      "review_count": 47,
-      "business_status": "OPERATIONAL",
-      "google_maps_url": "https://www.google.com/maps/place/...",
+      "rating": { "tier": "established", "label": "Established" },
       "services": [
         { "type": "epoxy", "label": "Epoxy Floor Coating" },
         { "type": "polyaspartic", "label": "Polyaspartic Coating" }
@@ -319,17 +313,18 @@ Get detailed profile for a specific provider. Use the `provider_slug` from searc
 ```json
 {
   "meta": {
-    "schema_version": "2.0",
+    "schema_version": "3.0",
     "total_results": 1,
     "niche": "coated-local",
-    "data_freshness": { "directory_refresh_cadence": "weekly", "google_data_refresh_cadence": "quarterly" }
+    "data_freshness": { "last_verified_at": "2026-09-18 09:41:02" }
   },
   "results": [
     {
       "name": "Colorado Concrete Coatings",
       "description": "Full-service garage floor coating company...",
-      "rating": 4.9,
-      "review_count": 47,
+      "rating": { "tier": "established", "label": "Established", "star": 4.8, "review_count": 12 },
+      "summary": "Full-service epoxy floor coating contractor specializing in garage and commercial floors across the Denver metro.",
+      "review_summary": "Customers single out on-time, on-budget garage and commercial floor jobs and a crew that cleans up after itself.",
       "years_in_business": 8,
       "services": [
         { "type": "epoxy", "label": "Epoxy Floor Coating" },
@@ -351,24 +346,8 @@ Get detailed profile for a specific provider. Use the `provider_slug` from searc
         }
       ],
       "listing_url": "https://coatedlocal.com/providers/denver-co/colorado-concrete-coatings/",
-      "google_data": {
-        "business_status": "OPERATIONAL",
-        "google_maps_url": "https://www.google.com/maps/place/...",
-        "formatted_address": "1234 Main St, Denver, CO 80202, USA",
-        "opening_hours": [
-          { "@type": "OpeningHoursSpecification", "dayOfWeek": "https://schema.org/Monday", "opens": "08:00", "closes": "17:00" }
-        ],
-        "summary": {
-          "text": "Full-service epoxy floor coating contractor specializing in garage and commercial floors across the Denver metro.",
-          "source": "localpro_ai"
-        },
-        "review_summary": {
-          "text": "Customers single out on-time, on-budget garage and commercial floor jobs and a crew that cleans up after itself.",
-          "source": "localpro_ai"
-        }
-      },
       "json_ld": { "@context": "https://schema.org", "@type": "LocalBusiness", "...": "..." },
-      "credibility": { "verified": true, "listing_tier": "free", "data_sources": ["..."] },
+      "credibility": { "verified": true, "listing_tier": "claimed", "data_sources": ["business_website", "owner_verified", "customer_reviews"] },
       "citation": { "display_name": "Colorado Concrete Coatings — Denver, CO", "...": "..." }
     }
   ]
@@ -384,14 +363,11 @@ Every response is wrapped in a consistent envelope:
 ```typescript
 {
   meta: {
-    schema_version: string                // Currently "2.0"
+    schema_version: string                // Currently "3.0"
     total_results: number                 // Count of items in results array
     niche: string | null                  // Niche ID if applicable
     data_freshness: {
-      directory_refresh_cadence: string   // "weekly"
-      google_data_refresh_cadence: string // "quarterly"
-      scraped_at?: string                 // ISO datetime — most recent directory write
-      google_refreshed_at?: string        // ISO datetime — most recent Google Places refresh
+      last_verified_at: string | null     // Most recent verification date among the records returned
     }
     data_note: string                     // Context about the data returned
   }
@@ -399,7 +375,9 @@ Every response is wrapped in a consistent envelope:
 }
 ```
 
-**Cadence framing.** The directory layer (provider names, services, websites, descriptions) refreshes weekly via a scraping pipeline. The Google Places layer (rating, reviews, opening hours, business status, AI summary) refreshes quarterly via Google Places Text Search Enterprise. Two cadences, both deliberate. AI agents that need real-time data should call back periodically rather than caching responses indefinitely.
+**Freshness.** `last_verified_at` is the date LocalPro last verified the newest record in the response. Each provider carries its own verification date in `credibility.verification_date`.
+
+**Migrating from 2.x:** `rating` is now an object (the LocalPro Rating) rather than a number; `review_count` moved inside it and appears only with first-party reviews. `summary` and `review_summary` are top-level strings. `business_status`, map links, opening hours and geo coordinates are no longer returned. `data_freshness` is a single `last_verified_at` date.
 
 ### Error Response
 
@@ -423,10 +401,7 @@ Errors use the same envelope with an `error` object:
 | `description` | string | no | Business description (always present) |
 | `city` | string | no | City name (always present) |
 | `state` | string | no | Two-letter state abbreviation (always present) |
-| `rating` | number | no | Customer rating 1.0–5.0 (always present) |
-| `review_count` | number | yes | Number of Google reviews |
-| `business_status` | string | yes | `OPERATIONAL` / `CLOSED_TEMPORARILY` (`CLOSED_PERMANENTLY` filtered automatically) |
-| `google_maps_url` | string | yes | Direct link to Google Maps listing |
+| `rating` | object | no | LocalPro Rating — see below (always present) |
 | `services` | array | no | `[{ type: string, label: string }]` (always present, non-empty) |
 | `pricing_summary` | string | yes | Pricing info (public access) |
 | `coverage_area` | string | yes | Geographic coverage description |
@@ -439,21 +414,22 @@ Errors use the same envelope with an `error` object:
 |-------|------|-------------|
 | `service_areas` | array | `[{ city, state, radius_miles }]` |
 | `service_details` | array | `[{ type, label, pricing_model, price_range, turnaround }]` |
-| `google_data` | object | Structured Google Places data — see below |
-| `json_ld` | object | Schema.org `LocalBusiness` JSON-LD with `AggregateRating`, `OpeningHoursSpecification`, `GeoCoordinates`, `telephone`, `sameAs` |
+| `summary` | string | LocalPro-written overview of the business (when available) |
+| `review_summary` | string | LocalPro-written "what customers say" summary; no raw review text or reviewer PII (when available) |
+| `json_ld` | object | Schema.org `LocalBusiness` JSON-LD; `AggregateRating` included only when backed by first-party reviews |
 | `credibility` | object | `{ verified, listing_tier, verification_date, data_sources }` |
 | `citation` | object | Pre-formatted strings: `{ display_name, in_text, attribution }` |
 
-**`google_data` block** (present on `get_provider` when Google data is available):
+**`rating` object (LocalPro Rating):**
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `business_status` | string | `OPERATIONAL` / `CLOSED_TEMPORARILY` |
-| `google_maps_url` | string | Direct Google Maps link |
-| `formatted_address` | string | Google's canonical address |
-| `opening_hours` | array | Schema.org `OpeningHoursSpecification[]` |
-| `summary` | object | `{ text, source }` — `source` is `localpro_ai` (LocalPro-generated, no disclosure required) or `google` (with required `disclosure` field) |
-| `review_summary` | object | `{ text, source }` — an owned, abstractive "what customers say" summary synthesized from Google reviews (no raw review text or author PII) |
+| `tier` | string | `established` / `well-reviewed` / `reviewed` / `unrated`: standing relative to other providers in the same category |
+| `label` | string | Display label for the tier |
+| `star` | number | 1.0–5.0, present only when backed by first-party customer reviews |
+| `review_count` | number | Count of published first-party reviews, present alongside `star` |
+
+Results are ranked by listing tier, then by LocalPro Rating.
 
 ### Nullable Fields
 
@@ -465,7 +441,7 @@ Fields marked nullable return `null` when data is unavailable — they are **nev
 
 All search and list tools work without an API key:
 - `list_niches`, `list_cities`, `list_service_types`, `search_providers`
-- `get_provider` returns basic data (name, description, rating, services, pricing summary, listing URL)
+- `get_provider` returns basic data (name, description, LocalPro Rating, services, pricing summary, listing URL)
 - Rate limited to 30 requests/minute per IP
 
 ### Premium (API key)
@@ -490,11 +466,10 @@ AI agents can self-discover this server via standard well-known endpoints:
 
 ## Data Policy
 
-- **What's returned:** Business name, city, state, rating, services, certifications, pricing ranges, coverage area, opening hours, business status, a review summary, AI summary, and a link to the full listing page.
+- **What's returned:** Business name, city, state, LocalPro Rating, services, certifications, pricing ranges, coverage area, LocalPro-written business and review summaries, and a link to the full listing page.
 - **What's withheld:** Phone numbers, email addresses, physical addresses, and websites are available only on the listing page (via `listing_url`). This protects provider data while driving traffic to the directory.
-- **Verification:** Only providers marked as verified appear in results. `CLOSED_PERMANENTLY` providers are filtered automatically.
-- **Updates:** Directory layer refreshed weekly. Google Places layer refreshed quarterly.
-- **Attribution:** Google reviews and AI summaries (when sourced from Google) include source URLs and required disclosure text per Google Maps Platform Terms of Service.
+- **Provenance:** Every listing is verified against the business's own website before it is served. Owners can claim and correct their listing; customers can leave first-party reviews on the directory. Permanently closed businesses are filtered automatically.
+- **Freshness:** Each response states when its records were last verified (`last_verified_at`). Listings are re-verified as needed, not on a fixed cycle.
 
 ## Rate Limits
 
@@ -509,7 +484,7 @@ Higher limits available for partners — contact will@localpro.dev.
 
 Every provider returned by the API has been verified and meets a minimum completeness threshold:
 
-- **Customer rating** — present on 100% of results
+- **LocalPro Rating** — present on 100% of results
 - **Business description** — present on 100% of results
 - **Services list** — present on 100% of results
 - **Name, city, state** — present on 100% of results
@@ -518,7 +493,7 @@ Every provider returned by the API has been verified and meets a minimum complet
 |----------|-----------|----------|
 | Water Damage Restoration | 950+ | 49 states |
 | Foundation Repair | 1,025+ | 27 states |
-| Crawl Space Repair | 1,025+ | 41 states |
+| Crawl Space Repair | 1,000+ | 41 states |
 | Mold & Asbestos | 950+ | 21 states |
 | Septic Services | 850+ | 36 states |
 | Basement Waterproofing | 600+ | 26 states |
@@ -526,9 +501,9 @@ Every provider returned by the API has been verified and meets a minimum complet
 | Floor Coating | 500+ | 42 states |
 | Radon | 250+ | 15 states |
 
-**Additional fields** (pricing, certifications, coverage area, years in business, opening hours, a review summary, AI summary) are available on most providers but not guaranteed. Fields without data return explicit `null` — never omitted, never empty strings.
+**Additional fields** (pricing, certifications, coverage area, years in business, business and review summaries) are available on most providers but not guaranteed. Fields without data return explicit `null` — never omitted, never empty strings.
 
-Directory data is refreshed weekly via the scraping pipeline. Google Places data (ratings, reviews, opening hours, business status) is refreshed quarterly via Text Search Enterprise. Two additional categories are being prepared for launch.
+Two additional categories are being prepared for launch.
 
 ## Self-Hosting
 

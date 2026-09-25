@@ -1,6 +1,16 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { buildListingUrl, errorResponse, isNicheEnabled, parseJsonArray, wrapResponse } from '../lib/response.js';
+import {
+  buildListingUrl,
+  buildRating,
+  errorResponse,
+  isNicheEnabled,
+  latest,
+  OWNED_REVIEW_COUNT_SQL,
+  parseJsonArray,
+  SERVED_PROVIDER_FILTER,
+  wrapResponse,
+} from '../lib/response.js';
 import { getServiceLabel } from '../lib/service-labels.js';
 import { logQuery, type ToolDeps } from '../lib/query-log.js';
 
@@ -10,8 +20,9 @@ interface ProviderRow {
   description: string | null;
   listing_tier: string | null;
   niche_id: string;
-  google_rating: number | null;
-  google_review_count: number | null;
+  rating_tier: string | null;
+  rating_star: number | null;
+  owned_review_count: number | null;
   enriched_services: string | null;
   enriched_pricing: string | null;
   enriched_certifications: string | null;
@@ -23,16 +34,13 @@ interface ProviderRow {
   metro_area: string | null;
   niche_domain: string;
   updated_at: string | null;
-  google_business_status: string | null;
-  google_maps_uri: string | null;
-  google_last_refreshed: string | null;
 }
 
 export function registerSearchProviders(server: McpServer, deps: ToolDeps): void {
   const { db, requestCtx, executionCtx } = deps;
   server.tool(
     'search_providers',
-    'Search for verified local service providers across 10 trade categories: water damage restoration, foundation/slab repair, crawl space repair, basement waterproofing, mold/asbestos/lead remediation, radon mitigation, septic services, commercial electrical, floor coating (epoxy/polyaspartic), and laundry pickup & delivery. Returns provider name, rating, review count, business status, services offered, certifications, years in business, and a link to the full profile with contact details. Each provider includes Google Maps URL when available. Covers major US metro areas. Use list_niches first to get valid niche IDs, and list_service_types for valid service_type values.',
+    'Search for verified local service providers across 10 trade categories: water damage restoration, foundation/slab repair, crawl space repair, basement waterproofing, mold/asbestos/lead remediation, radon mitigation, septic services, commercial electrical, floor coating (epoxy/polyaspartic), and laundry pickup & delivery. Returns provider name, LocalPro Rating, services offered, pricing summary, years in business, and a link to the full profile with contact details. Covers major US metro areas. Use list_niches first to get valid niche IDs, and list_service_types for valid service_type values.',
     {
       niche_id: z.string().describe('Niche ID (e.g. "coated-local", "radon-local"). Get options from list_niches.'),
       city: z.string().optional().describe('City or metro area slug (e.g. "denver-co", "minneapolis-mn"). Get options from list_cities.'),
@@ -70,33 +78,28 @@ export function registerSearchProviders(server: McpServer, deps: ToolDeps): void
             p.description,
             p.listing_tier,
             p.niche_id,
-            p.google_rating,
-            p.google_review_count,
+            pr.confidence AS rating_tier,
+            pr.star AS rating_star,
+            ${OWNED_REVIEW_COUNT_SQL} AS owned_review_count,
             p.enriched_services,
             p.enriched_pricing,
             p.enriched_certifications,
             p.enriched_coverage,
             p.enriched_years,
             p.updated_at,
-            p.google_business_status,
-            p.google_maps_uri,
-            p.google_last_refreshed,
+            pr.sort_score,
             c.name AS city_name,
             c.state_abbr,
             c.slug AS city_slug,
             c.metro_area,
             n.domain AS niche_domain
           FROM providers p
+          JOIN provider_ratings pr ON pr.provider_id = p.id
           JOIN provider_locations pl ON pl.provider_id = p.id
           JOIN cities c ON c.id = pl.city_id
           JOIN niches n ON n.id = p.niche_id
           WHERE p.niche_id = ?
-            AND p.verified = 1
-            AND p.review_status = 'approved'
-            AND p.google_rating IS NOT NULL
-            AND p.description IS NOT NULL AND length(p.description) > 5
-            AND p.enriched_services IS NOT NULL AND p.enriched_services != '[]'
-            AND (p.google_business_status IS NULL OR p.google_business_status != 'CLOSED_PERMANENTLY')
+            AND ${SERVED_PROVIDER_FILTER}
             ${cityFilter}
             ${serviceFilter}
           ORDER BY
@@ -106,7 +109,7 @@ export function registerSearchProviders(server: McpServer, deps: ToolDeps): void
               WHEN 'claimed' THEN 2
               ELSE 3
             END,
-            p.google_rating DESC NULLS LAST
+            pr.sort_score DESC NULLS LAST
           LIMIT ?`;
 
         const { results } = await db.prepare(sql).bind(...binds).all<ProviderRow>();
@@ -121,11 +124,7 @@ export function registerSearchProviders(server: McpServer, deps: ToolDeps): void
             description: r.description ?? null,
             city: r.city_name,
             state: r.state_abbr,
-            rating: r.google_rating ?? null,
-            review_count: r.google_review_count ?? null,
-            // Surface business status when known (filtered to OPERATIONAL/null/CLOSED_TEMPORARILY)
-            ...(r.google_business_status ? { business_status: r.google_business_status } : {}),
-            ...(r.google_maps_uri ? { google_maps_url: r.google_maps_uri } : {}),
+            rating: buildRating(r),
             services: rawServices.map((s) => ({
               type: s,
               label: getServiceLabel(r.niche_id, s),
@@ -155,25 +154,12 @@ export function registerSearchProviders(server: McpServer, deps: ToolDeps): void
           };
         }
 
-        // Use latest updated_at among returned providers as scraped_at, and the
-        // most recent google_last_refreshed for the Google data freshness signal.
-        const scraped_at = results.reduce<string | null>((max, r) => {
-          if (!r.updated_at) return max;
-          if (!max) return r.updated_at;
-          return r.updated_at > max ? r.updated_at : max;
-        }, null);
-        const google_refreshed_at = results.reduce<string | null>((max, r) => {
-          if (!r.google_last_refreshed) return max;
-          if (!max) return r.google_last_refreshed;
-          return r.google_last_refreshed > max ? r.google_last_refreshed : max;
-        }, null);
-
         executionCtx.waitUntil(logQuery(db, { toolName: 'search_providers', nicheId: niche_id, citySlug: city, serviceType: service_type, resultCount: providers.length, startTimeMs }, requestCtx));
         return {
           content: [
             {
               type: 'text',
-              text: wrapResponse({ results: providers, niche_id, scraped_at, google_refreshed_at }),
+              text: wrapResponse({ results: providers, niche_id, last_verified_at: latest(results, (r) => r.updated_at) }),
             },
           ],
         };
