@@ -6,6 +6,7 @@ import { registerListServiceTypes } from './tools/list-service-types.js';
 import { registerSearchProviders } from './tools/search-providers.js';
 import { registerGetProvider } from './tools/get-provider.js';
 import { extractRequestContext, type ToolDeps } from './lib/query-log.js';
+import { countFloor, fetchNicheSummary } from './lib/niche-summary.js';
 
 interface Env {
   DB: D1Database;
@@ -18,8 +19,10 @@ function isAuthenticated(request: Request, env: Env): boolean {
   return request.headers.get('X-API-Key') === env.API_KEY;
 }
 
+export const SERVER_VERSION = '3.1.0';
+
 function createServer(deps: ToolDeps): McpServer {
-  const server = new McpServer({ name: 'LocalPro', version: '3.0.0' });
+  const server = new McpServer({ name: 'LocalPro', version: SERVER_VERSION });
   registerListNiches(server, deps);
   registerListCities(server, deps);
   registerListServiceTypes(server, deps);
@@ -28,8 +31,8 @@ function createServer(deps: ToolDeps): McpServer {
   return server;
 }
 
-const LLMS_TXT = `# LocalPro MCP Server
-> Verified local service provider data for AI agents. 7,000+ fully profiled providers across 10 trade categories. Every provider is verified against the business's own website and carries a LocalPro Rating, a services list, and LocalPro-written summaries.
+const llmsTxt = (total: string) => `# LocalPro MCP Server
+> Verified local service provider data for AI agents. ${total} fully profiled providers across 10 trade categories. Every provider passes a quality check before it is listed and carries a LocalPro Rating, a services list, and LocalPro-written summaries.
 
 ## Tools
 - list_niches — Discover available service categories
@@ -45,9 +48,9 @@ get_provider responses include LocalPro-written summary and review_summary field
 Permanently closed businesses are filtered automatically.
 `;
 
-const LLMS_FULL_TXT = `# LocalPro MCP Server — Extended Reference for AI Agents
+const llmsFullTxt = (total: string) => `# LocalPro MCP Server — Extended Reference for AI Agents
 
-> Verified local service provider data. 7,000+ fully profiled providers across 10 trade categories. Public, no API key required.
+> Verified local service provider data. ${total} fully profiled providers across 10 trade categories. Public, no API key required.
 
 ## Endpoint
 \`POST https://mcp.localpro.dev/mcp\` (JSON-RPC 2.0 over Streamable HTTP, stateless mode — \`tools/call\` works without prior \`initialize\`).
@@ -126,7 +129,7 @@ Water damage restoration, foundation/slab repair, crawl space repair, basement w
 - **Closed-permanently providers.** Filtered automatically; they will not appear in \`search_providers\` or \`get_provider\` even if you have the slug.
 
 ## Where the data comes from
-LocalPro verifies each business against its own website: services, credentials, and description are read from the source and confirmed before a listing is published. Owners can claim and correct their listing, and customers can leave first-party reviews on the directory. Every response carries \`data_freshness.last_verified_at\`, the most recent verification date among the records returned.
+Listings are built from public business information and, where we can confirm it belongs to the business, the company's own website. Every listing passes a quality check before it is published. Owners can claim and correct their listing, and customers can leave first-party reviews on the directory. Every response carries \`data_freshness.last_verified_at\`, the most recent verification date among the records returned.
 
 When in doubt, re-call the tool rather than caching responses indefinitely.
 
@@ -145,12 +148,12 @@ const GLAMA_JSON = JSON.stringify(
   2
 );
 
-const MCP_JSON = JSON.stringify(
+const mcpJson = (total: string) => JSON.stringify(
   {
     schema_version: '3.0',
     name: 'LocalPro Provider Directory',
     description:
-      'Verified local service provider data for AI agents across 10 home-services categories — water damage restoration, foundation/slab repair, crawl space repair, basement waterproofing, mold/asbestos/lead remediation, radon mitigation, septic services, commercial electrical, floor coating, and laundry pickup & delivery.',
+      `Verified local service provider data for AI agents: ${total} providers across 10 home-services categories — water damage restoration, foundation/slab repair, crawl space repair, basement waterproofing, mold/asbestos/lead remediation, radon mitigation, septic services, commercial electrical, floor coating, and laundry pickup & delivery.`,
     tools: [
       { name: 'list_niches', description: 'Discover available service categories', access: 'public' },
       { name: 'list_cities', description: 'Find cities where providers operate', access: 'public' },
@@ -165,35 +168,31 @@ const MCP_JSON = JSON.stringify(
   2
 );
 
-function handleWellKnown(request: Request): Response | null {
-  const url = new URL(request.url);
+const WELL_KNOWN: Record<string, { type: string; body: (total: string) => string }> = {
+  '/.well-known/llms.txt': { type: 'text/plain; charset=utf-8', body: llmsTxt },
+  '/.well-known/llms-full.txt': { type: 'text/plain; charset=utf-8', body: llmsFullTxt },
+  '/.well-known/mcp.json': { type: 'application/json; charset=utf-8', body: mcpJson },
+  '/.well-known/glama.json': { type: 'application/json; charset=utf-8', body: () => GLAMA_JSON },
+};
+
+async function handleWellKnown(request: Request, db: D1Database): Promise<Response | null> {
   if (request.method !== 'GET') return null;
-  if (url.pathname === '/.well-known/llms.txt') {
-    return new Response(LLMS_TXT, {
-      headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'public, max-age=86400' },
-    });
+  const doc = WELL_KNOWN[new URL(request.url).pathname];
+  if (!doc) return null;
+  let total = 'Thousands of';
+  try {
+    total = countFloor((await fetchNicheSummary(db)).reduce((n, r) => n + r.provider_count, 0));
+  } catch {
+    // Discovery text still serves without the live count.
   }
-  if (url.pathname === '/.well-known/mcp.json') {
-    return new Response(MCP_JSON, {
-      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=86400' },
-    });
-  }
-  if (url.pathname === '/.well-known/llms-full.txt') {
-    return new Response(LLMS_FULL_TXT, {
-      headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'public, max-age=86400' },
-    });
-  }
-  if (url.pathname === '/.well-known/glama.json') {
-    return new Response(GLAMA_JSON, {
-      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=86400' },
-    });
-  }
-  return null;
+  return new Response(doc.body(total), {
+    headers: { 'content-type': doc.type, 'cache-control': 'public, max-age=86400' },
+  });
 }
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    const wellKnown = handleWellKnown(request);
+    const wellKnown = await handleWellKnown(request, env.DB);
     if (wellKnown) return wellKnown;
 
     if (env.MCP_RATE_LIMITER) {

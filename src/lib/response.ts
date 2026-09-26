@@ -14,10 +14,9 @@ export function parseJsonArray(val: string | null | undefined): string[] {
 
 export const SCHEMA_VERSION = '3.0';
 
-// Enabled niches — the categories this server serves. Mirrors the production
-// allowlist (config/mcp-niches.json in the LocalPro monorepo). Only providers
-// in these niches that also pass the completeness gate (SERVED_PROVIDER_FILTER) are returned by any tool. Edit
-// this list to change which categories are exposed.
+// Enabled niches — the categories this server serves. Generated from the production allowlist
+// (config/mcp-niches.json in the LocalPro monorepo) by scripts/mcp-sync-mirror.mjs. Edit this
+// list to change which categories a self-hosted copy exposes.
 export const ENABLED_NICHES = new Set<string>([
   'coated-local',
   'radon-local',

@@ -1,12 +1,6 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import {
-  errorResponse,
-  latest,
-  nicheBindValues,
-  nicheInClause,
-  SERVED_PROVIDER_FILTER,
-  wrapResponse,
-} from '../lib/response.js';
+import { errorResponse, latest, wrapResponse } from '../lib/response.js';
+import { fetchNicheSummary } from '../lib/niche-summary.js';
 import { logQuery, type ToolDeps } from '../lib/query-log.js';
 
 export function registerListNiches(server: McpServer, deps: ToolDeps): void {
@@ -18,42 +12,10 @@ export function registerListNiches(server: McpServer, deps: ToolDeps): void {
     async () => {
       const startTimeMs = Date.now();
       try {
-        // provider_count is aligned to search_providers' filter set: requires a
-        // provider_locations + cities row (search_providers JOINs them), excludes
-        // closed businesses, and applies the same completeness gate via
-        // SERVED_PROVIDER_FILTER. Mismatched counts here would let an AI agent see N
-        // providers in list_niches and get fewer than N from search_providers.
-        const { results } = await db
-          .prepare(
-            `SELECT n.id, n.name, n.slug, n.domain,
-                    (SELECT COUNT(*)
-                     FROM providers p
-                     JOIN provider_ratings pr ON pr.provider_id = p.id
-                     WHERE p.niche_id = n.id
-                       AND ${SERVED_PROVIDER_FILTER}
-                       AND EXISTS (
-                         SELECT 1 FROM provider_locations pl
-                         JOIN cities c ON c.id = pl.city_id
-                         WHERE pl.provider_id = p.id
-                       )) AS provider_count,
-                    (SELECT MAX(p.updated_at)
-                     FROM providers p
-                     WHERE p.niche_id = n.id
-                       AND p.verified = 1 AND p.review_status = 'approved') AS last_updated
-             FROM niches n
-             WHERE n.id IN (${nicheInClause()})
-             ORDER BY n.name`
-          )
-          .bind(...nicheBindValues())
-          .all<{ id: string; name: string; slug: string; domain: string; provider_count: number; last_updated: string | null }>();
-
-        const niches = results.map((r) => ({
-          niche_id: r.id,
-          name: r.name,
-          slug: r.slug,
-          domain: r.domain,
-          provider_count: r.provider_count,
-        }));
+        // Counts use the same served-provider gate as search_providers, so an agent that
+        // sees N providers here gets N from search_providers.
+        const results = await fetchNicheSummary(db);
+        const niches = results.map(({ last_updated, ...n }) => n);
 
         executionCtx.waitUntil(logQuery(db, { toolName: 'list_niches', resultCount: niches.length, startTimeMs }, requestCtx));
         return {

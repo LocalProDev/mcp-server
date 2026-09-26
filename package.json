@@ -1,6 +1,6 @@
 {
   "name": "tradelocal-mcp",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,11 +10,11 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
+    "@cloudflare/workers-types": "^4.20250401.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250401.0",
     "typescript": "^5.9.3",
     "wrangler": "^4.73.0"
   }
