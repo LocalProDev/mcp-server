@@ -1,0 +1,27 @@
+name: Publish to MCP Registry
+
+# Publishes server.json to registry.modelcontextprotocol.io whenever its version changes.
+# Auth is GitHub OIDC for the io.github.LocalProDev namespace: no stored or expiring token.
+# server.json is written by the LocalPro sync (never hand-edited), so a version bump here
+# means a new server version is already live at mcp.localpro.dev.
+
+on:
+  push:
+    branches: [main]
+    paths: [server.json]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install mcp-publisher
+        run: curl -sL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
+      - run: ./mcp-publisher validate
+      - run: ./mcp-publisher login github-oidc
+      - run: ./mcp-publisher publish
