@@ -2,6 +2,15 @@
 
 All notable changes to the LocalPro MCP Server.
 
+## [3.1.0] — 2026-09-26
+
+### Added
+- **`list_niches` returns `state_count`** per category (distinct states with served providers).
+
+### Changed
+- **Provider totals in `/.well-known/llms.txt`, `llms-full.txt` and `mcp.json` are computed live** from the database instead of hard-coded.
+- **This repository is now generated from the production server.** `src/`, versions, and the README Live Now table are synced by a script after each deploy and weekly, so the published source and counts always match what `mcp.localpro.dev` serves.
+
 ## [3.0.0] — 2026-09-25
 
 Schema 3.0: every field the server returns is now LocalPro-owned data.

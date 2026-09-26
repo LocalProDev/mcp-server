@@ -8,24 +8,14 @@ When someone asks an AI assistant *"find me a radon mitigation company near Denv
 
 ## What it does
 
-LocalPro exposes a curated database of **9,000+ fully profiled local trade and service businesses** across 10 live categories. Every provider is verified against the business's own website before it is served, and carries a LocalPro Rating, a business description, and a services list, plus (where available) LocalPro-written business and review summaries. No incomplete profiles.
+LocalPro exposes a curated database of **<!-- @live:total -->9,000+<!-- /@live:total --> fully profiled local trade and service businesses** across 10 live categories. Every provider passes a quality check before it is served, and carries a LocalPro Rating, a business description, and a services list, plus (where available) LocalPro-written business and review summaries. No incomplete profiles.
 
 All data is LocalPro-owned: collected and verified by us, corrected by business owners who claim their listing, and increasingly backed by first-party customer reviews left on the directories themselves.
 
 ### Live Now
 
-| Category | Niche ID | Providers | Example Services |
-|----------|----------|-----------|-----------------|
-| Water Damage Restoration | `soaked-local` | 1,900+ | Flood cleanup, mold remediation, structural drying |
-| Commercial Electrical | `hire-electrical` | 1,200+ | Commercial & industrial wiring, service upgrades, maintenance |
-| Foundation Repair | `slab-local` | 1,050+ | Pier installation, mudjacking, foam injection, leveling |
-| Crawl Space Repair | `crawl-local` | 1,000+ | Encapsulation, vapor barrier, structural repair, waterproofing |
-| Mold & Asbestos | `abate-local` | 950+ | Mold, asbestos, lead paint remediation |
-| Septic Services | `pump-local` | 850+ | Pumping, inspection, drain field repair |
-| Basement Waterproofing | `basement-local` | 600+ | Interior/exterior waterproofing, drainage, sump pumps |
-| Laundry Services | `suds-local` | 550+ | Wash & fold, dry cleaning, pickup & delivery |
-| Floor Coating | `coated-local` | 525+ | Epoxy, polyaspartic, metallic, flake, concrete polishing |
-| Radon | `radon-local` | 250+ | Testing, mitigation, sub-slab depressurization |
+<!-- @live:niches:start -->
+<!-- @live:niches:end -->
 
 ### Coming Soon
 
@@ -468,7 +458,7 @@ AI agents can self-discover this server via standard well-known endpoints:
 
 - **What's returned:** Business name, city, state, LocalPro Rating, services, certifications, pricing ranges, coverage area, LocalPro-written business and review summaries, and a link to the full listing page.
 - **What's withheld:** Phone numbers, email addresses, physical addresses, and websites are available only on the listing page (via `listing_url`). This protects provider data while driving traffic to the directory.
-- **Provenance:** Every listing is verified against the business's own website before it is served. Owners can claim and correct their listing; customers can leave first-party reviews on the directory. Permanently closed businesses are filtered automatically.
+- **Provenance:** Listings are built from public business information and, where we can confirm it belongs to the business, the company's own website. Every listing passes a quality check before it is served. Owners can claim and correct their listing; customers can leave first-party reviews on the directory. Permanently closed businesses are filtered automatically.
 - **Freshness:** Each response states when its records were last verified (`last_verified_at`). Listings are re-verified as needed, not on a fixed cycle.
 
 ## Rate Limits
@@ -489,17 +479,7 @@ Every provider returned by the API has been verified and meets a minimum complet
 - **Services list** — present on 100% of results
 - **Name, city, state** — present on 100% of results
 
-| Category | Providers | Coverage |
-|----------|-----------|----------|
-| Water Damage Restoration | 950+ | 49 states |
-| Foundation Repair | 1,025+ | 27 states |
-| Crawl Space Repair | 1,000+ | 41 states |
-| Mold & Asbestos | 950+ | 21 states |
-| Septic Services | 850+ | 36 states |
-| Basement Waterproofing | 600+ | 26 states |
-| Laundry Services | 550+ | 39 states |
-| Floor Coating | 500+ | 42 states |
-| Radon | 250+ | 15 states |
+Per-category provider and state counts are in [Live Now](#live-now), generated from the live database.
 
 **Additional fields** (pricing, certifications, coverage area, years in business, business and review summaries) are available on most providers but not guaranteed. Fields without data return explicit `null` — never omitted, never empty strings.
 
