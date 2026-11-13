@@ -15,7 +15,7 @@ All data is LocalPro-owned: collected and verified by us, corrected by business 
 ### Live Now
 
 <!-- @live:niches:start -->
-<!-- Generated from live list_niches by scripts/mcp-sync-mirror.mjs on 2026-11-12. Do not edit by hand. -->
+<!-- Generated from live list_niches by scripts/mcp-sync-mirror.mjs on 2026-11-13. Do not edit by hand. -->
 | Category | Niche ID | Providers | States | Example Services |
 |----------|----------|-----------|--------|------------------|
 | Water Damage Restoration | `soaked-local` | 1,850+ | 49 | Flood cleanup, mold remediation, structural drying |
@@ -23,10 +23,10 @@ All data is LocalPro-owned: collected and verified by us, corrected by business 
 | Foundation Repair | `slab-local` | 1,050+ | 28 | Pier installation, mudjacking, foam injection, leveling |
 | Crawl Space Repair | `crawl-local` | 1,000+ | 42 | Encapsulation, vapor barrier, structural repair, waterproofing |
 | Mold & Asbestos | `abate-local` | 975+ | 26 | Mold, asbestos, lead paint remediation |
-| Septic Services | `pump-local` | 850+ | 31 | Pumping, inspection, drain field repair |
+| Septic Services | `pump-local` | 850+ | 30 | Pumping, inspection, drain field repair |
 | Basement Waterproofing | `basement-local` | 625+ | 25 | Interior/exterior waterproofing, drainage, sump pumps |
-| Floor Coating | `coated-local` | 575+ | 48 | Epoxy, polyaspartic, metallic, flake, concrete polishing |
 | Laundry Services | `suds-local` | 575+ | 39 | Wash & fold, dry cleaning, pickup & delivery |
+| Floor Coating | `coated-local` | 575+ | 48 | Epoxy, polyaspartic, metallic, flake, concrete polishing |
 | Radon | `radon-local` | 250+ | 18 | Testing, mitigation, sub-slab depressurization |
 <!-- @live:niches:end -->
 
