@@ -15,11 +15,11 @@ All data is LocalPro-owned: collected and verified by us, corrected by business 
 ### Live Now
 
 <!-- @live:niches:start -->
-<!-- Generated from live list_niches by scripts/mcp-sync-mirror.mjs on 2026-11-13. Do not edit by hand. -->
+<!-- Generated from live list_niches by scripts/mcp-sync-mirror.mjs on 2026-11-14. Do not edit by hand. -->
 | Category | Niche ID | Providers | States | Example Services |
 |----------|----------|-----------|--------|------------------|
 | Water Damage Restoration | `soaked-local` | 1,850+ | 49 | Flood cleanup, mold remediation, structural drying |
-| Commercial Electrical | `hire-electrical` | 1,150+ | 35 | Commercial & industrial wiring, service upgrades, maintenance |
+| Commercial Electrical | `hire-electrical` | 1,200+ | 35 | Commercial & industrial wiring, service upgrades, maintenance |
 | Foundation Repair | `slab-local` | 1,050+ | 28 | Pier installation, mudjacking, foam injection, leveling |
 | Crawl Space Repair | `crawl-local` | 1,000+ | 42 | Encapsulation, vapor barrier, structural repair, waterproofing |
 | Mold & Asbestos | `abate-local` | 975+ | 26 | Mold, asbestos, lead paint remediation |
