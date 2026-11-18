@@ -46,7 +46,7 @@ export function nicheBindValues(): string[] {
 export const SERVED_PROVIDER_FILTER = `p.verified = 1 AND p.review_status = 'approved'
   AND p.description IS NOT NULL AND length(p.description) > 5
   AND p.enriched_services IS NOT NULL AND p.enriched_services != '[]'
-  AND (p.google_business_status IS NULL OR p.google_business_status != 'CLOSED_PERMANENTLY')`;
+  AND p.closed_at IS NULL`;
 
 /** Published first-party review count for provider alias `p`. */
 export const OWNED_REVIEW_COUNT_SQL = `(SELECT COUNT(*) FROM reviews rv WHERE rv.provider_id = p.id AND rv.status = 'published')`;

@@ -15,7 +15,7 @@ All data is LocalPro-owned: collected and verified by us, corrected by business 
 ### Live Now
 
 <!-- @live:niches:start -->
-<!-- Generated from live list_niches by scripts/mcp-sync-mirror.mjs on 2026-11-16. Do not edit by hand. -->
+<!-- Generated from live list_niches by scripts/mcp-sync-mirror.mjs on 2026-11-18. Do not edit by hand. -->
 | Category | Niche ID | Providers | States | Example Services |
 |----------|----------|-----------|--------|------------------|
 | Water Damage Restoration | `soaked-local` | 1,850+ | 49 | Flood cleanup, mold remediation, structural drying |
